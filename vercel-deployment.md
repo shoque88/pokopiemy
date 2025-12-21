@@ -15,7 +15,28 @@ Jeśli IONOS Web Hosting Plus nie obsługuje Node.js, Vercel jest idealnym rozwi
 
 ## KROK 1: Przygotowanie repozytorium Git
 
-### 1.1. Utwórz repozytorium
+### 1.1. Utwórz Personal Access Token (PAT) na GitHub
+
+GitHub **nie obsługuje już autoryzacji przez hasło**. Musisz utworzyć Personal Access Token:
+
+1. Przejdź do https://github.com/settings/tokens
+2. Kliknij **Generate new token** > **Generate new token (classic)**
+3. Nadaj nazwę tokenowi (np. "Pokopiemy Deployment")
+4. Wybierz zakresy uprawnień:
+   - ✅ `repo` (pełny dostęp do repozytoriów)
+   - ✅ `workflow` (jeśli używasz GitHub Actions)
+5. Kliknij **Generate token**
+6. **SKOPIUJ TOKEN** - będzie widoczny tylko raz!
+
+### 1.2. Utwórz repozytorium na GitHub
+
+1. Przejdź do https://github.com/new
+2. Nazwa repozytorium: `pokopiemy`
+3. Wybierz **Public** lub **Private**
+4. **NIE zaznaczaj** "Initialize this repository with a README"
+5. Kliknij **Create repository**
+
+### 1.3. Skonfiguruj Git i wdróż kod
 
 ```bash
 # W katalogu projektu
@@ -24,10 +45,39 @@ git add .
 git commit -m "Initial commit"
 git branch -M main
 
-# Utwórz repozytorium na GitHub/GitLab/Bitbucket
-# Następnie:
+# Dodaj remote (zastąp 'twoj-username' swoją nazwą użytkownika)
 git remote add origin https://github.com/twoj-username/pokopiemy.git
+
+# Push z użyciem tokenu
+# Gdy zostaniesz poproszony o username: wpisz swoją nazwę użytkownika GitHub
+# Gdy zostaniesz poproszony o password: wklej Personal Access Token (NIE hasło!)
 git push -u origin main
+```
+
+**Alternatywa - użyj SSH (zalecane):**
+
+Jeśli masz skonfigurowany klucz SSH:
+
+```bash
+# Zmień remote na SSH
+git remote set-url origin git@github.com:twoj-username/pokopiemy.git
+
+# Push (nie będzie wymagał hasła)
+git push -u origin main
+```
+
+**Alternatywa - użyj GitHub CLI:**
+
+```bash
+# Zainstaluj GitHub CLI (jeśli nie masz)
+# Windows: winget install GitHub.cli
+# Linux: sudo apt install gh
+
+# Zaloguj się
+gh auth login
+
+# Utwórz repozytorium i wdróż
+gh repo create pokopiemy --public --source=. --remote=origin --push
 ```
 
 ---
