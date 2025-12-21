@@ -4,6 +4,8 @@ import { getAuthUser } from '@/lib/middleware';
 import { updateMatchStatuses } from '@/lib/match-utils';
 import { sendCancelationEmails } from '@/lib/match-utils';
 
+export const dynamic = 'force-dynamic';
+
 // GET - szczegóły meczu
 export async function GET(
   request: NextRequest,

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getAuthUser } from '@/lib/middleware';
 
+export const dynamic = 'force-dynamic';
+
 // POST - zapisanie się na mecz
 export async function POST(request: NextRequest) {
   try {
