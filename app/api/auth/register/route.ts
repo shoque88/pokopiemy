@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sprawdź czy użytkownik już istnieje
-    const existingUser = db.users.findByEmail(email);
+    const existingUser = await db.users.findByEmail(email);
     if (existingUser) {
       return NextResponse.json(
         { error: 'User with this email already exists' },
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Utwórz użytkownika
     const hashedPassword = hashPassword(password);
-    const newUser = db.users.create({
+    const newUser = await db.users.create({
       name,
       email,
       password: hashedPassword,

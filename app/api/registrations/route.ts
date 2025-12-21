@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sprawdź czy mecz istnieje i jest aktywny
-    const match = db.matches.get(match_id);
+    const match = await db.matches.get(match_id);
     if (!match) {
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
     }
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sprawdź czy użytkownik już jest zapisany
-    const existing = db.registrations.findByMatchAndUser(match_id, authUser.userId);
+    const existing = await db.registrations.findByMatchAndUser(match_id, authUser.userId);
     if (existing) {
       return NextResponse.json(
         { error: 'Already registered for this match' },
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sprawdź limit graczy
-    const registeredCount = db.registrations.countByMatch(match_id);
+    const registeredCount = await db.registrations.countByMatch(match_id);
     if (registeredCount >= match.max_players) {
       return NextResponse.json(
         { error: 'Match is full' },
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Zapisz użytkownika
-    const registration = db.registrations.create({
+    const registration = await db.registrations.create({
       match_id,
       user_id: authUser.userId,
     });

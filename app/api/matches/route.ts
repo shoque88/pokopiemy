@@ -11,14 +11,14 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     // Aktualizuj statusy meczów przed pobraniem
-    updateMatchStatuses();
+    await updateMatchStatuses();
 
     const { searchParams } = new URL(request.url);
     const location = searchParams.get('location');
     const status = searchParams.get('status') || 'active';
     const dateFrom = searchParams.get('dateFrom');
 
-    let matches = db.matches.all();
+    let matches = await db.matches.all();
 
     // Filtrowanie
     if (status) {
@@ -43,9 +43,9 @@ export async function GET(request: NextRequest) {
       parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime()
     );
 
-    const matchesWithRegistrations: MatchWithRegistrations[] = matches.map((match: any) => {
-      const registrations = db.registrations.findByMatch(match.id);
-      const users = db.users.all();
+    const matchesWithRegistrations: MatchWithRegistrations[] = await Promise.all(matches.map(async (match: any) => {
+      const registrations = await db.registrations.findByMatch(match.id);
+      const users = await db.users.all();
 
       const registrationsWithUsers = registrations.map((reg: any) => {
         const user = users.find((u: any) => u.id === reg.user_id);
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
         registrations: registrationsWithUsers,
         registered_count: registrations.length,
       };
-    });
+    }));
 
     return NextResponse.json(matchesWithRegistrations);
   } catch (error) {
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newMatch = db.matches.create({
+    const newMatch = await db.matches.create({
       name,
       description: description || null,
       date_start,

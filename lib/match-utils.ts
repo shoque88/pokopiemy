@@ -4,26 +4,26 @@ import { format, addDays, addWeeks, addMonths, parseISO, isAfter } from 'date-fn
 import nodemailer from 'nodemailer';
 
 // Funkcja do automatycznego aktualizowania statusu meczów
-export function updateMatchStatuses() {
+export async function updateMatchStatuses() {
   const now = new Date();
-  const activeMatches = db.matches.findByStatus('active');
+  const activeMatches = await db.matches.findByStatus('active');
 
   for (const match of activeMatches) {
     const endDate = parseISO(match.date_end);
     
     // Jeśli mecz się zakończył, zmień status
     if (isAfter(now, endDate)) {
-      db.matches.update(match.id, { status: 'finished' });
+      await db.matches.update(match.id, { status: 'finished' });
 
       // Jeśli mecz jest cykliczny, utwórz nowy mecz
       if (match.is_recurring && match.recurrence_frequency) {
-        createNextRecurringMatch(match);
+        await createNextRecurringMatch(match);
       }
     }
   }
 }
 
-function createNextRecurringMatch(match: any) {
+async function createNextRecurringMatch(match: any) {
   const startDate = parseISO(match.date_start);
   const endDate = parseISO(match.date_end);
 
@@ -52,7 +52,7 @@ function createNextRecurringMatch(match: any) {
     ? match.payment_methods 
     : JSON.stringify(match.payment_methods || []);
 
-  db.matches.create({
+  await db.matches.create({
     name: match.name,
     description: match.description || null,
     date_start: nextStartDate.toISOString(),
@@ -69,8 +69,8 @@ function createNextRecurringMatch(match: any) {
 
 // Funkcja do wysyłania powiadomień e-mail
 export async function sendCancelationEmails(matchId: number, matchName: string, location: string, dateStart: string) {
-  const registrations = db.registrations.findByMatch(matchId);
-  const users = db.users.all();
+  const registrations = await db.registrations.findByMatch(matchId);
+  const users = await db.users.all();
 
   const registrationsWithUsers = registrations.map((reg: any) => {
     const user = users.find((u: any) => u.id === reg.user_id);
