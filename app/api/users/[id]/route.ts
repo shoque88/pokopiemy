@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getAuthUser } from '@/lib/middleware';
 
+export const dynamic = 'force-dynamic';
+
 // PUT - aktualizacja profilu użytkownika
 export async function PUT(
   request: NextRequest,

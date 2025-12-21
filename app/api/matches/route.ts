@@ -5,6 +5,8 @@ import { Match, MatchWithRegistrations } from '@/lib/types';
 import { updateMatchStatuses } from '@/lib/match-utils';
 import { parseISO } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
+
 // GET - lista meczów
 export async function GET(request: NextRequest) {
   try {

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getAuthUser } from '@/lib/middleware';
 
+// Wymuś dynamiczne renderowanie (używa cookies)
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     // Sprawdź autoryzację przez JWT
