@@ -1,27 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getAuthUser } from '@/lib/middleware';
-import { getCurrentUser } from '@/lib/auth-nextauth';
 
 export async function GET(request: NextRequest) {
   try {
-    // Najpierw sprawdź NextAuth session
-    const nextAuthUser = await getCurrentUser();
-    if (nextAuthUser) {
-      const user = db.users.get(nextAuthUser.id);
-      if (user) {
-        return NextResponse.json({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          favorite_position: user.favorite_position,
-          is_admin: user.is_admin === 1,
-        });
-      }
-    }
-
-    // Fallback do starego systemu JWT
+    // Sprawdź autoryzację przez JWT
     const authUser = getAuthUser(request);
     if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

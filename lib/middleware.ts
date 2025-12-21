@@ -10,7 +10,12 @@ export function getAuthUser(request: NextRequest) {
 }
 
 export async function getAuthUserNextAuth() {
-  return await getCurrentUser();
+  try {
+    return await getCurrentUser();
+  } catch (error) {
+    console.error('Error in getAuthUserNextAuth:', error);
+    return null;
+  }
 }
 
 export function requireAuth(request: NextRequest) {
