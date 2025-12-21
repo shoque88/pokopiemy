@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { getAuthUser } from '@/lib/middleware';
+import { getAuthUserOrNextAuth } from '@/lib/middleware';
 import { updateMatchStatuses } from '@/lib/match-utils';
 import { sendCancelationEmails } from '@/lib/match-utils';
 
@@ -65,7 +65,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUserOrNextAuth(request);
     if (!authUser || !authUser.isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -144,7 +144,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUserOrNextAuth(request);
     if (!authUser || !authUser.isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
