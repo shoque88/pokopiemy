@@ -133,7 +133,7 @@ export default function MatchDetailsPage() {
   };
 
   const isRegistered = user && match?.registrations.some((r) => r.user.id === user.id);
-  const isFull = match && match.registered_count >= match.max_players;
+  const isFull = match ? match.registered_count >= match.max_players : false;
 
   if (loading) {
     return <div className="loading">Ładowanie szczegółów meczu...</div>;
