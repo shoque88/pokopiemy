@@ -89,9 +89,9 @@ export async function GET(request: NextRequest) {
 // POST - utworzenie meczu (tylko admin)
 export async function POST(request: NextRequest) {
   try {
-    // Sprawdź autoryzację (JWT - NextAuth może mieć problemy w build)
-    const { getAuthUser } = require('@/lib/middleware');
-    const authUser = getAuthUser(request);
+    // Sprawdź autoryzację - obsługuje zarówno JWT jak i NextAuth
+    const { getAuthUserOrNextAuth } = await import('@/lib/middleware');
+    const authUser = await getAuthUserOrNextAuth(request);
     if (!authUser || !authUser.isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

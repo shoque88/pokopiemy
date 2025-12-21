@@ -18,6 +18,29 @@ export async function getAuthUserNextAuth() {
   }
 }
 
+// Funkcja pomocnicza do sprawdzania autoryzacji - obsługuje zarówno JWT jak i NextAuth
+export async function getAuthUserOrNextAuth(request: NextRequest) {
+  // Najpierw sprawdź JWT (dla użytkowników email/hasło)
+  const jwtUser = getAuthUser(request);
+  if (jwtUser) {
+    return {
+      userId: jwtUser.userId,
+      isAdmin: jwtUser.isAdmin || false,
+    };
+  }
+
+  // Jeśli nie ma JWT, sprawdź NextAuth session (dla OAuth użytkowników)
+  const nextAuthUser = await getCurrentUser();
+  if (nextAuthUser) {
+    return {
+      userId: nextAuthUser.id,
+      isAdmin: nextAuthUser.isAdmin || false,
+    };
+  }
+
+  return null;
+}
+
 export function requireAuth(request: NextRequest) {
   const user = getAuthUser(request);
   if (!user) {

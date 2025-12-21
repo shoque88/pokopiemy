@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { getAuthUser } from '@/lib/middleware';
+import { getAuthUserOrNextAuth } from '@/lib/middleware';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authUser = getAuthUser(request);
+    const authUser = await getAuthUserOrNextAuth(request);
     if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
