@@ -27,7 +27,7 @@ export async function PUT(
     if (phone !== undefined) updates.phone = phone;
     if (favorite_position !== undefined) updates.favorite_position = favorite_position;
 
-    const updatedUser = db.users.update(parseInt(params.id), updates);
+    const updatedUser = await db.users.update(parseInt(params.id), updates);
 
     if (!updatedUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });

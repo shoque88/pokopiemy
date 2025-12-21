@@ -1,42 +1,131 @@
-import fs from 'fs';
-import path from 'path';
+import { put } from '@vercel/blob';
 
-const dbPath = path.join(process.cwd(), 'data');
-const usersPath = path.join(dbPath, 'users.json');
-const matchesPath = path.join(dbPath, 'matches.json');
-const registrationsPath = path.join(dbPath, 'registrations.json');
+// Klucze dla Vercel Blob (nazwy plików)
+const USERS_KEY = 'users.json';
+const MATCHES_KEY = 'matches.json';
+const REGISTRATIONS_KEY = 'registrations.json';
 
-// Upewnij się, że katalog data istnieje
-if (!fs.existsSync(dbPath)) {
-  fs.mkdirSync(dbPath, { recursive: true });
+// Cache dla przechowywania danych w pamięci (opcjonalne, dla lepszej wydajności)
+let cache: {
+  users?: any[];
+  matches?: any[];
+  registrations?: any[];
+  timestamp?: number;
+  urls?: {
+    users?: string;
+    matches?: string;
+    registrations?: string;
+  };
+} = {};
+
+const CACHE_TTL = 30000; // 30 sekund
+
+// Funkcja pomocnicza do pobierania URL blob store
+function getBlobStoreUrl(): string | null {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) {
+    return null;
+  }
+  // Token ma format: vercel_blob_rw_<storeId>_<random>
+  const parts = token.split('_');
+  if (parts.length >= 4) {
+    const storeId = parts[3];
+    return `https://${storeId}.public.blob.vercel-storage.com`;
+  }
+  return null;
 }
 
-// Funkcje pomocnicze do odczytu/zapisu
-function readFile(filePath: string, defaultValue: any[]): any[] {
+// Funkcje pomocnicze do odczytu/zapisu z Vercel Blob
+async function readCollection(key: string, defaultValue: any[]): Promise<any[]> {
   try {
-    if (fs.existsSync(filePath)) {
-      const data = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(data);
+    // Sprawdź cache
+    const cacheKey = key.replace('.json', '') as 'users' | 'matches' | 'registrations';
+    const now = Date.now();
+    if (cache[cacheKey] && cache.timestamp && (now - cache.timestamp) < CACHE_TTL) {
+      return cache[cacheKey]!;
+    }
+
+    const baseUrl = getBlobStoreUrl();
+    if (!baseUrl) {
+      console.error('BLOB_READ_WRITE_TOKEN is not set or invalid');
+      return defaultValue;
+    }
+
+    // Pobierz URL blob (używamy cache URL jeśli dostępny)
+    let blobUrl = cache.urls?.[cacheKey];
+    if (!blobUrl) {
+      blobUrl = `${baseUrl}/${key}`;
+    }
+
+    try {
+      const response = await fetch(blobUrl, {
+        cache: 'no-store', // Zawsze pobierz najnowsze dane
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Blob nie istnieje jeszcze - zwróć wartość domyślną
+          cache[cacheKey] = defaultValue;
+          cache.timestamp = now;
+          return defaultValue;
+        }
+        throw new Error(`Failed to fetch ${key}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const result = Array.isArray(data) ? data : defaultValue;
+      
+      // Zaktualizuj cache
+      cache[cacheKey] = result;
+      cache.timestamp = now;
+      if (!cache.urls) cache.urls = {};
+      cache.urls[cacheKey] = blobUrl;
+      
+      return result;
+    } catch (fetchError: any) {
+      // Jeśli fetch nie powiódł się (np. blob nie istnieje), zwróć wartość domyślną
+      if (fetchError.message?.includes('404') || fetchError.status === 404) {
+        cache[cacheKey] = defaultValue;
+        cache.timestamp = now;
+        return defaultValue;
+      }
+      throw fetchError;
     }
   } catch (error) {
-    console.error(`Error reading ${filePath}:`, error);
+    console.error(`Error reading ${key} from Blob:`, error);
+    return defaultValue;
   }
-  return defaultValue;
 }
 
-function writeFile(filePath: string, data: any[]): void {
+async function writeCollection(key: string, data: any[]): Promise<void> {
   try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    const jsonString = JSON.stringify(data, null, 2);
+    
+    // Zapisz do Vercel Blob
+    const blob = await put(key, jsonString, {
+      access: 'public',
+      contentType: 'application/json',
+      addRandomSuffix: false, // Używamy stałych nazw plików
+    });
+
+    // Zaktualizuj cache
+    const cacheKey = key.replace('.json', '') as 'users' | 'matches' | 'registrations';
+    cache[cacheKey] = data;
+    cache.timestamp = Date.now();
+    if (!cache.urls) cache.urls = {};
+    cache.urls[cacheKey] = blob.url;
   } catch (error) {
-    console.error(`Error writing ${filePath}:`, error);
+    console.error(`Error writing ${key} to Blob:`, error);
+    // Wyczyść cache w przypadku błędu
+    const cacheKey = key.replace('.json', '') as 'users' | 'matches' | 'registrations';
+    delete cache[cacheKey];
+    throw error;
   }
 }
 
 // Inicjalizacja bazy danych
-export function initDatabase() {
-  const users = readFile(usersPath, []);
-  const matches = readFile(matchesPath, []);
-  const registrations = readFile(registrationsPath, []);
+export async function initDatabase() {
+  const users = await readCollection(USERS_KEY, []);
 
   // Utworzenie domyślnego użytkownika admina (jeśli nie istnieje)
   const adminExists = users.some((u: any) => u.is_admin === 1);
@@ -54,99 +143,96 @@ export function initDatabase() {
       created_at: new Date().toISOString(),
     };
     users.push(admin);
-    writeFile(usersPath, users);
+    await writeCollection(USERS_KEY, users);
   }
 }
 
-// Inicjalizacja przy pierwszym uruchomieniu
-initDatabase();
-
-// Prosty interfejs bazy danych
+// Prosty interfejs bazy danych (zachowuje kompatybilność z istniejącym kodem)
 const db = {
   users: {
-    all: () => readFile(usersPath, []),
-    get: (id: number) => {
-      const users = readFile(usersPath, []);
+    all: async () => await readCollection(USERS_KEY, []),
+    get: async (id: number) => {
+      const users = await readCollection(USERS_KEY, []);
       return users.find((u: any) => u.id === id);
     },
-    findByEmail: (email: string) => {
-      const users = readFile(usersPath, []);
+    findByEmail: async (email: string) => {
+      const users = await readCollection(USERS_KEY, []);
       return users.find((u: any) => u.email === email);
     },
-    create: (user: any) => {
-      const users = readFile(usersPath, []);
+    create: async (user: any) => {
+      const users = await readCollection(USERS_KEY, []);
       const newId = users.length > 0 ? Math.max(...users.map((u: any) => u.id)) + 1 : 1;
       const newUser = { ...user, id: newId, created_at: new Date().toISOString() };
       users.push(newUser);
-      writeFile(usersPath, users);
+      await writeCollection(USERS_KEY, users);
       return newUser;
     },
-    update: (id: number, updates: any) => {
-      const users = readFile(usersPath, []);
+    update: async (id: number, updates: any) => {
+      const users = await readCollection(USERS_KEY, []);
       const index = users.findIndex((u: any) => u.id === id);
       if (index !== -1) {
         users[index] = { ...users[index], ...updates };
-        writeFile(usersPath, users);
+        await writeCollection(USERS_KEY, users);
         return users[index];
       }
       return null;
     },
   },
   matches: {
-    all: () => readFile(matchesPath, []),
-    get: (id: number) => {
-      const matches = readFile(matchesPath, []);
+    all: async () => await readCollection(MATCHES_KEY, []),
+    get: async (id: number) => {
+      const matches = await readCollection(MATCHES_KEY, []);
       return matches.find((m: any) => m.id === id);
     },
-    create: (match: any) => {
-      const matches = readFile(matchesPath, []);
+    create: async (match: any) => {
+      const matches = await readCollection(MATCHES_KEY, []);
       const newId = matches.length > 0 ? Math.max(...matches.map((m: any) => m.id)) + 1 : 1;
       const newMatch = { ...match, id: newId, created_at: new Date().toISOString() };
       matches.push(newMatch);
-      writeFile(matchesPath, matches);
+      await writeCollection(MATCHES_KEY, matches);
       return newMatch;
     },
-    update: (id: number, updates: any) => {
-      const matches = readFile(matchesPath, []);
+    update: async (id: number, updates: any) => {
+      const matches = await readCollection(MATCHES_KEY, []);
       const index = matches.findIndex((m: any) => m.id === id);
       if (index !== -1) {
         matches[index] = { ...matches[index], ...updates };
-        writeFile(matchesPath, matches);
+        await writeCollection(MATCHES_KEY, matches);
         return matches[index];
       }
       return null;
     },
-    delete: (id: number) => {
-      const matches = readFile(matchesPath, []);
+    delete: async (id: number) => {
+      const matches = await readCollection(MATCHES_KEY, []);
       const filtered = matches.filter((m: any) => m.id !== id);
-      writeFile(matchesPath, filtered);
+      await writeCollection(MATCHES_KEY, filtered);
       return filtered.length < matches.length;
     },
-    findByStatus: (status: string) => {
-      const matches = readFile(matchesPath, []);
+    findByStatus: async (status: string) => {
+      const matches = await readCollection(MATCHES_KEY, []);
       return matches.filter((m: any) => m.status === status);
     },
   },
   registrations: {
-    all: () => readFile(registrationsPath, []),
-    get: (id: number) => {
-      const registrations = readFile(registrationsPath, []);
+    all: async () => await readCollection(REGISTRATIONS_KEY, []),
+    get: async (id: number) => {
+      const registrations = await readCollection(REGISTRATIONS_KEY, []);
       return registrations.find((r: any) => r.id === id);
     },
-    findByMatch: (matchId: number) => {
-      const registrations = readFile(registrationsPath, []);
+    findByMatch: async (matchId: number) => {
+      const registrations = await readCollection(REGISTRATIONS_KEY, []);
       return registrations.filter((r: any) => r.match_id === matchId);
     },
-    findByUser: (userId: number) => {
-      const registrations = readFile(registrationsPath, []);
+    findByUser: async (userId: number) => {
+      const registrations = await readCollection(REGISTRATIONS_KEY, []);
       return registrations.filter((r: any) => r.user_id === userId);
     },
-    findByMatchAndUser: (matchId: number, userId: number) => {
-      const registrations = readFile(registrationsPath, []);
+    findByMatchAndUser: async (matchId: number, userId: number) => {
+      const registrations = await readCollection(REGISTRATIONS_KEY, []);
       return registrations.find((r: any) => r.match_id === matchId && r.user_id === userId);
     },
-    create: (registration: any) => {
-      const registrations = readFile(registrationsPath, []);
+    create: async (registration: any) => {
+      const registrations = await readCollection(REGISTRATIONS_KEY, []);
       // Sprawdź czy już istnieje
       const exists = registrations.some(
         (r: any) => r.match_id === registration.match_id && r.user_id === registration.user_id
@@ -157,17 +243,17 @@ const db = {
       const newId = registrations.length > 0 ? Math.max(...registrations.map((r: any) => r.id)) + 1 : 1;
       const newRegistration = { ...registration, id: newId, created_at: new Date().toISOString() };
       registrations.push(newRegistration);
-      writeFile(registrationsPath, registrations);
+      await writeCollection(REGISTRATIONS_KEY, registrations);
       return newRegistration;
     },
-    delete: (id: number) => {
-      const registrations = readFile(registrationsPath, []);
+    delete: async (id: number) => {
+      const registrations = await readCollection(REGISTRATIONS_KEY, []);
       const filtered = registrations.filter((r: any) => r.id !== id);
-      writeFile(registrationsPath, filtered);
+      await writeCollection(REGISTRATIONS_KEY, filtered);
       return filtered.length < registrations.length;
     },
-    countByMatch: (matchId: number) => {
-      const registrations = readFile(registrationsPath, []);
+    countByMatch: async (matchId: number) => {
+      const registrations = await readCollection(REGISTRATIONS_KEY, []);
       return registrations.filter((r: any) => r.match_id === matchId).length;
     },
   },

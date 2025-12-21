@@ -15,7 +15,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const registration = db.registrations.get(parseInt(params.id));
+    const registration = await db.registrations.get(parseInt(params.id));
     
     if (!registration) {
       return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
@@ -26,7 +26,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const deleted = db.registrations.delete(parseInt(params.id));
+    const deleted = await db.registrations.delete(parseInt(params.id));
 
     if (!deleted) {
       return NextResponse.json({ error: 'Failed to delete registration' }, { status: 500 });

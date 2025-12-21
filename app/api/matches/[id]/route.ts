@@ -12,16 +12,16 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    updateMatchStatuses();
+    await updateMatchStatuses();
 
-    const match = db.matches.get(parseInt(params.id));
+    const match = await db.matches.get(parseInt(params.id));
     
     if (!match) {
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
     }
 
-    const registrations = db.registrations.findByMatch(match.id);
-    const users = db.users.all();
+    const registrations = await db.registrations.findByMatch(match.id);
+    const users = await db.users.all();
 
     const registrationsWithUsers = registrations.map((reg: any) => {
       const user = users.find((u: any) => u.id === reg.user_id);
@@ -84,7 +84,7 @@ export async function PUT(
       recurrence_frequency,
     } = await request.json();
 
-    const oldMatch = db.matches.get(parseInt(params.id));
+    const oldMatch = await db.matches.get(parseInt(params.id));
     if (!oldMatch) {
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
     }
@@ -114,7 +114,7 @@ export async function PUT(
     if (is_recurring !== undefined) updates.is_recurring = is_recurring ? 1 : 0;
     if (recurrence_frequency !== undefined) updates.recurrence_frequency = recurrence_frequency;
 
-    const updatedMatch = db.matches.update(parseInt(params.id), updates);
+    const updatedMatch = await db.matches.update(parseInt(params.id), updates);
 
     if (!updatedMatch) {
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
@@ -149,7 +149,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const deleted = db.matches.delete(parseInt(params.id));
+    const deleted = await db.matches.delete(parseInt(params.id));
 
     if (!deleted) {
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });

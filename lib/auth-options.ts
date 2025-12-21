@@ -27,11 +27,11 @@ export const authOptions: NextAuthOptions = {
       }
 
       // Sprawdź czy użytkownik już istnieje
-      let dbUser = db.users.findByEmail(user.email);
+      let dbUser = await db.users.findByEmail(user.email);
 
       if (!dbUser) {
         // Utwórz nowego użytkownika
-        dbUser = db.users.create({
+        dbUser = await db.users.create({
           name: user.name || user.email.split('@')[0],
           email: user.email,
           password: '', // OAuth użytkownicy nie mają hasła
@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
       } else {
         // Aktualizuj informacje OAuth jeśli nie były wcześniej ustawione
         if (account && !dbUser.oauth_provider) {
-          db.users.update(dbUser.id, {
+          await db.users.update(dbUser.id, {
             oauth_provider: account.provider,
             oauth_id: account.providerAccountId,
           });
@@ -55,7 +55,7 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user, account }) {
       if (user) {
-        const dbUser = db.users.findByEmail(user.email || '');
+        const dbUser = await db.users.findByEmail(user.email || '');
         if (dbUser) {
           token.userId = dbUser.id;
           token.isAdmin = dbUser.is_admin === 1;
