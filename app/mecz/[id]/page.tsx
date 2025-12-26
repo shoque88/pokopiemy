@@ -176,7 +176,7 @@ export default function MatchDetailsPage() {
           <span className="info-value">{match.organizer_phone}</span>
         </div>
         <div className="info-item">
-          <span className="info-label">Maksymalna liczba graczy</span>
+          <span className="info-label">Max graczy</span>
           <span className="info-value">{match.max_players}</span>
         </div>
         <div className="info-item">
