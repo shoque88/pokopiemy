@@ -34,8 +34,15 @@ export default function SuperuserPanelPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'matches' | 'users'>('matches');
+  const [activeTab, setActiveTab] = useState<'matches' | 'users' | 'password'>('matches');
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
+  const [passwordFormData, setPasswordFormData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: '',
+  });
+  const [passwordMessage, setPasswordMessage] = useState<{ type: string; text: string } | null>(null);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -155,6 +162,52 @@ export default function SuperuserPanelPage() {
     }
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangingPassword(true);
+    setPasswordMessage(null);
+
+    if (passwordFormData.new_password !== passwordFormData.confirm_password) {
+      setPasswordMessage({ type: 'error', text: 'Nowe hasła nie są zgodne' });
+      setChangingPassword(false);
+      return;
+    }
+
+    if (passwordFormData.new_password.length < 6) {
+      setPasswordMessage({ type: 'error', text: 'Nowe hasło musi mieć co najmniej 6 znaków' });
+      setChangingPassword(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/superuser/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_password: passwordFormData.current_password,
+          new_password: passwordFormData.new_password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setPasswordMessage({ type: 'success', text: 'Hasło zostało zmienione' });
+        setPasswordFormData({
+          current_password: '',
+          new_password: '',
+          confirm_password: '',
+        });
+      } else {
+        setPasswordMessage({ type: 'error', text: data.error || 'Błąd podczas zmiany hasła' });
+      }
+    } catch (error) {
+      setPasswordMessage({ type: 'error', text: 'Błąd podczas zmiany hasła' });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const formatDateTime = (dateString: string) => {
     return format(parseISO(dateString), 'dd.MM.yyyy HH:mm');
   };
@@ -200,6 +253,20 @@ export default function SuperuserPanelPage() {
           }}
         >
           Użytkownicy
+        </button>
+        <button
+          onClick={() => setActiveTab('password')}
+          style={{
+            padding: '0.75rem 1.5rem',
+            border: 'none',
+            background: activeTab === 'password' ? 'var(--primary-color)' : 'transparent',
+            color: activeTab === 'password' ? 'white' : 'var(--text-color)',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'password' ? '3px solid var(--primary-color)' : '3px solid transparent',
+            marginBottom: '-2px',
+          }}
+        >
+          Zmiana hasła
         </button>
       </div>
 
@@ -301,6 +368,60 @@ export default function SuperuserPanelPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'password' && (
+        <div>
+          <h2 style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}>Zmiana hasła</h2>
+          <div className="card">
+            {passwordMessage && (
+              <div className={`alert alert-${passwordMessage.type === 'success' ? 'success' : 'error'}`} style={{ marginBottom: '1rem' }}>
+                {passwordMessage.text}
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword}>
+              <div className="form-group">
+                <label>Aktualne hasło *</label>
+                <input
+                  type="password"
+                  required
+                  value={passwordFormData.current_password}
+                  onChange={(e) => setPasswordFormData({ ...passwordFormData, current_password: e.target.value })}
+                  placeholder="Wprowadź aktualne hasło"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Nowe hasło *</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={passwordFormData.new_password}
+                  onChange={(e) => setPasswordFormData({ ...passwordFormData, new_password: e.target.value })}
+                  placeholder="Wprowadź nowe hasło (min. 6 znaków)"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Potwierdź nowe hasło *</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={passwordFormData.confirm_password}
+                  onChange={(e) => setPasswordFormData({ ...passwordFormData, confirm_password: e.target.value })}
+                  placeholder="Potwierdź nowe hasło"
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary" disabled={changingPassword}>
+                {changingPassword ? 'Zmienianie hasła...' : 'Zmień hasło'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>
