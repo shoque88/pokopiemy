@@ -28,10 +28,12 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      // Dla Facebook, jeśli nie ma email, pozwól na logowanie bez email
+      const isFacebook = account?.provider === 'facebook';
       let userEmail = user.email;
       
-      // Dla Facebook, jeśli nie ma email, spróbuj pobrać przez Graph API
-      if (!userEmail && account?.provider === 'facebook' && account?.accessToken) {
+      // Dla Facebook, jeśli nie ma email, spróbuj pobrać przez Graph API (opcjonalnie)
+      if (!userEmail && isFacebook && account?.accessToken) {
         try {
           const response = await fetch(
             `https://graph.facebook.com/me?fields=email&access_token=${account.accessToken}`
@@ -45,26 +47,62 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
+      // Dla Facebook bez email, użyj OAuth ID jako identyfikatora
+      if (isFacebook && !userEmail && account?.providerAccountId) {
+        // Sprawdź czy użytkownik już istnieje po OAuth
+        let dbUser = await db.users.findByOAuth('facebook', account.providerAccountId);
+
+        if (!dbUser) {
+          // Utwórz nowego użytkownika z tymczasowym email
+          const tempEmail = `facebook_${account.providerAccountId}@pokopiemy.local`;
+          dbUser = await db.users.create({
+            name: user.name || `Facebook User ${account.providerAccountId}`,
+            email: tempEmail,
+            password: '', // OAuth użytkownicy nie mają hasła
+            phone: null,
+            favorite_position: null,
+            is_admin: 0,
+            oauth_provider: 'facebook',
+            oauth_id: account.providerAccountId,
+          });
+        }
+
+        return true;
+      }
+
+      // Dla innych providerów lub Facebook z emailem, wymagaj email
       if (!userEmail) {
         console.error('No email available for user');
         return false;
       }
 
-      // Sprawdź czy użytkownik już istnieje
+      // Sprawdź czy użytkownik już istnieje po email
       let dbUser = await db.users.findByEmail(userEmail);
 
       if (!dbUser) {
-        // Utwórz nowego użytkownika
-        dbUser = await db.users.create({
-          name: user.name || userEmail.split('@')[0],
-          email: userEmail,
-          password: '', // OAuth użytkownicy nie mają hasła
-          phone: null,
-          favorite_position: null,
-          is_admin: 0,
-          oauth_provider: account?.provider || null,
-          oauth_id: account?.providerAccountId || null,
-        });
+        // Sprawdź też po OAuth (na wypadek gdyby użytkownik miał już konto OAuth)
+        if (account?.provider && account?.providerAccountId) {
+          dbUser = await db.users.findByOAuth(account.provider, account.providerAccountId);
+        }
+
+        if (!dbUser) {
+          // Utwórz nowego użytkownika
+          dbUser = await db.users.create({
+            name: user.name || userEmail.split('@')[0],
+            email: userEmail,
+            password: '', // OAuth użytkownicy nie mają hasła
+            phone: null,
+            favorite_position: null,
+            is_admin: 0,
+            oauth_provider: account?.provider || null,
+            oauth_id: account?.providerAccountId || null,
+          });
+        } else {
+          // Aktualizuj email jeśli użytkownik istniał tylko po OAuth
+          await db.users.update(dbUser.id, {
+            email: userEmail,
+          });
+        }
       } else {
         // Aktualizuj informacje OAuth jeśli nie były wcześniej ustawione
         if (account && !dbUser.oauth_provider) {
@@ -78,12 +116,41 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user, account }) {
-      if (user) {
-        const dbUser = await db.users.findByEmail(user.email || '');
+      if (user && account) {
+        let dbUser = null;
+        
+        // Dla Facebook bez email, szukaj po OAuth
+        if (account.provider === 'facebook' && !user.email && account.providerAccountId) {
+          dbUser = await db.users.findByOAuth('facebook', account.providerAccountId);
+          // Zapisz OAuth ID w tokenie dla przyszłych wywołań
+          if (dbUser) {
+            (token as any).oauthProvider = 'facebook';
+            (token as any).oauthId = account.providerAccountId;
+          }
+        } else if (user.email) {
+          // Dla innych przypadków, szukaj po email
+          dbUser = await db.users.findByEmail(user.email);
+        }
+
         if (dbUser) {
           token.userId = dbUser.id;
           token.isAdmin = dbUser.is_admin === 1;
           token.email = dbUser.email;
+        }
+      } else if (token && (token as any).oauthProvider && (token as any).oauthId) {
+        // W kolejnych wywołaniach, jeśli mamy OAuth ID w tokenie, użyj go
+        const dbUser = await db.users.findByOAuth((token as any).oauthProvider, (token as any).oauthId);
+        if (dbUser) {
+          token.userId = dbUser.id;
+          token.isAdmin = dbUser.is_admin === 1;
+          token.email = dbUser.email;
+        }
+      } else if (token && token.email) {
+        // W kolejnych wywołaniach, jeśli mamy email w tokenie, użyj go
+        const dbUser = await db.users.findByEmail(token.email as string);
+        if (dbUser) {
+          token.userId = dbUser.id;
+          token.isAdmin = dbUser.is_admin === 1;
         }
       }
       return token;
