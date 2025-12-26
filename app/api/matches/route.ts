@@ -39,8 +39,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (location) {
+      const searchTerm = location.toLowerCase();
       matches = matches.filter((m: any) => 
-        m.location.toLowerCase().includes(location.toLowerCase())
+        m.location.toLowerCase().includes(searchTerm) ||
+        m.name.toLowerCase().includes(searchTerm)
       );
     }
 
