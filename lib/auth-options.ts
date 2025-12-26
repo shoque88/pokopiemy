@@ -1,7 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
-import AzureADProvider from 'next-auth/providers/azure-ad';
 import db from '@/lib/db';
 
 export const authOptions: NextAuthOptions = {
@@ -19,11 +18,6 @@ export const authOptions: NextAuthOptions = {
         },
       },
       // Pobierz email przez Graph API w callback, jeśli nie został zwrócony
-    }),
-    AzureADProvider({
-      clientId: process.env.AZURE_AD_CLIENT_ID || '',
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET || '',
-      tenantId: process.env.AZURE_AD_TENANT_ID || '',
     }),
   ],
   callbacks: {

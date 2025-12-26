@@ -168,34 +168,6 @@ function LoginForm() {
                 </>
               )}
             </button>
-
-            <button
-              type="button"
-              onClick={() => handleOAuthSignIn('azure-ad')}
-              disabled={oauthLoading !== null}
-              className="btn"
-              style={{
-                width: '100%',
-                backgroundColor: '#0078D4',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1rem',
-              }}
-            >
-              {oauthLoading === 'azure-ad' ? (
-                'Logowanie...'
-              ) : (
-                <>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z" />
-                  </svg>
-                  Zaloguj się przez Microsoft
-                </>
-              )}
-            </button>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0' }}>
