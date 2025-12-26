@@ -103,14 +103,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - utworzenie meczu (tylko admin)
+// POST - utworzenie meczu (dla wszystkich zalogowanych użytkowników)
 export async function POST(request: NextRequest) {
   try {
     // Sprawdź autoryzację - obsługuje zarówno JWT jak i NextAuth
     const { getAuthUserOrNextAuth } = await import('@/lib/middleware');
     const authUser = await getAuthUserOrNextAuth(request);
-    if (!authUser || !authUser.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // Pobierz dane użytkownika
+    const user = await db.users.get(authUser.userId);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const {
@@ -127,7 +133,13 @@ export async function POST(request: NextRequest) {
       recurrence_frequency,
     } = await request.json();
 
-    if (!name || !date_start || !date_end || !location || !max_players || !organizer_phone || !level) {
+    // Dla zwykłych użytkowników, użyj ich telefonu jako organizer_phone (jeśli nie podano)
+    // Admini mogą podać własny telefon
+    const finalOrganizerPhone = authUser.isAdmin 
+      ? (organizer_phone || user.phone || '')
+      : (user.phone || organizer_phone || '');
+
+    if (!name || !date_start || !date_end || !location || !max_players || !finalOrganizerPhone || !level) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -141,7 +153,7 @@ export async function POST(request: NextRequest) {
       date_end,
       location,
       max_players,
-      organizer_phone,
+      organizer_phone: finalOrganizerPhone,
       payment_methods: JSON.stringify(payment_methods || []),
       level: level || 'kopanina',
       status: 'active',
