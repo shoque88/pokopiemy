@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, phone, favorite_position } = await request.json();
+    const { name, email, password, phone, preferred_level } = await request.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       email,
       password: hashedPassword,
       phone: phone || null,
-      favorite_position: favorite_position || null,
+      preferred_level: preferred_level || null,
       is_admin: 0,
     });
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         name: newUser.name,
         email: newUser.email,
         phone: newUser.phone,
-        favorite_position: newUser.favorite_position,
+        preferred_level: newUser.preferred_level,
       },
     });
 

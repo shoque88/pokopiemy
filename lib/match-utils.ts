@@ -61,6 +61,7 @@ async function createNextRecurringMatch(match: any) {
     max_players: match.max_players,
     organizer_phone: match.organizer_phone,
     payment_methods: paymentMethods,
+    level: match.level || 'kopanina',
     status: 'active',
     is_recurring: match.is_recurring,
     recurrence_frequency: match.recurrence_frequency,

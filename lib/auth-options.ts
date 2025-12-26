@@ -60,7 +60,7 @@ export const authOptions: NextAuthOptions = {
             email: tempEmail,
             password: '', // OAuth użytkownicy nie mają hasła
             phone: null,
-            favorite_position: null,
+            preferred_level: null,
             is_admin: 0,
             oauth_provider: 'facebook',
             oauth_id: account.providerAccountId,
@@ -92,7 +92,7 @@ export const authOptions: NextAuthOptions = {
             email: userEmail,
             password: '', // OAuth użytkownicy nie mają hasła
             phone: null,
-            favorite_position: null,
+            preferred_level: null,
             is_admin: 0,
             oauth_provider: account?.provider || null,
             oauth_id: account?.providerAccountId || null,

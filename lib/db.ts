@@ -138,7 +138,7 @@ export async function initDatabase() {
       email: '***REDACTED_EMAIL***',
       password: hashedPassword,
       phone: '***REDACTED_PHONE***',
-      favorite_position: 'Bramkarz',
+      preferred_level: null,
       is_admin: 1,
       created_at: new Date().toISOString(),
     };

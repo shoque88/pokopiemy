@@ -18,6 +18,18 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || 'active';
     const dateFrom = searchParams.get('dateFrom');
 
+    // Pobierz zalogowanego użytkownika (jeśli istnieje) do filtrowania po poziomie
+    const { getAuthUserOrNextAuth } = await import('@/lib/middleware');
+    const authUser = await getAuthUserOrNextAuth(request);
+    let userPreferredLevel: string | null = null;
+    
+    if (authUser) {
+      const user = await db.users.get(authUser.userId);
+      if (user && user.preferred_level) {
+        userPreferredLevel = user.preferred_level;
+      }
+    }
+
     let matches = await db.matches.all();
 
     // Filtrowanie
@@ -36,6 +48,11 @@ export async function GET(request: NextRequest) {
       matches = matches.filter((m: any) => 
         parseISO(m.date_start) >= dateFromParsed
       );
+    }
+
+    // Filtrowanie po poziomie użytkownika (jeśli użytkownik jest zalogowany i ma ustawiony poziom)
+    if (userPreferredLevel) {
+      matches = matches.filter((m: any) => m.level === userPreferredLevel);
     }
 
     // Sortowanie
@@ -58,7 +75,7 @@ export async function GET(request: NextRequest) {
             id: user.id,
             name: user.name,
             phone: user.phone,
-            favorite_position: user.favorite_position,
+            preferred_level: user.preferred_level,
           } : null,
         };
       }).filter((reg: any) => reg.user !== null);
@@ -105,11 +122,12 @@ export async function POST(request: NextRequest) {
       max_players,
       organizer_phone,
       payment_methods,
+      level,
       is_recurring,
       recurrence_frequency,
     } = await request.json();
 
-    if (!name || !date_start || !date_end || !location || !max_players || !organizer_phone) {
+    if (!name || !date_start || !date_end || !location || !max_players || !organizer_phone || !level) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -125,6 +143,7 @@ export async function POST(request: NextRequest) {
       max_players,
       organizer_phone,
       payment_methods: JSON.stringify(payment_methods || []),
+      level: level || 'kopanina',
       status: 'active',
       is_recurring: is_recurring ? 1 : 0,
       recurrence_frequency: recurrence_frequency || null,

@@ -4,12 +4,14 @@ export type MatchStatus = 'active' | 'finished' | 'canceled';
 
 export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly';
 
+export type PreferredLevel = 'kopanina' | 'cośtam gramy' | 'wannabe pro';
+
 export interface User {
   id: number;
   name: string;
   email: string;
   phone?: string;
-  favorite_position?: string;
+  preferred_level?: PreferredLevel;
   is_admin: number;
   created_at: string;
 }
@@ -25,6 +27,7 @@ export interface Match {
   organizer_phone: string;
   payment_methods: PaymentMethod[];
   status: MatchStatus;
+  level: PreferredLevel;
   is_recurring: boolean;
   recurrence_frequency?: RecurrenceFrequency;
   created_at: string;
