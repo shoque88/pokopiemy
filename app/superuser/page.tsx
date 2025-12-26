@@ -360,39 +360,40 @@ export default function SuperuserPanelPage() {
             ) : (
               <div>
                 {filteredUsers.map((user) => (
-                <div key={user.id} className="card" style={{ marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <h3>{user.name}</h3>
-                      <p style={{ color: 'var(--text-light)', marginTop: '0.25rem' }}>
-                        {user.email} {user.phone && `• ${user.phone}`}
-                      </p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={user.can_create_matches === 1}
-                            onChange={() => handleToggleUserBlock(user.id, 'can_create_matches')}
-                          />
-                          <span>Może tworzyć mecze</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={user.can_register_to_matches === 1}
-                            onChange={() => handleToggleUserBlock(user.id, 'can_register_to_matches')}
-                          />
-                          <span>Może zapisywać się na mecze</span>
-                        </label>
+                  <div key={user.id} className="card" style={{ marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <h3>{user.name}</h3>
+                        <p style={{ color: 'var(--text-light)', marginTop: '0.25rem' }}>
+                          {user.email} {user.phone && `• ${user.phone}`}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={user.can_create_matches === 1}
+                              onChange={() => handleToggleUserBlock(user.id, 'can_create_matches')}
+                            />
+                            <span>Może tworzyć mecze</span>
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={user.can_register_to_matches === 1}
+                              onChange={() => handleToggleUserBlock(user.id, 'can_register_to_matches')}
+                            />
+                            <span>Może zapisywać się na mecze</span>
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
 
