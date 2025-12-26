@@ -20,12 +20,35 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { name, phone, favorite_position } = await request.json();
+    const { name, email, phone, favorite_position } = await request.json();
+
+    // Pobierz aktualnego użytkownika, aby sprawdzić czy ma tymczasowy email
+    const currentUser = await db.users.get(parseInt(params.id));
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const isTemporaryEmail = currentUser.email?.endsWith('@pokopiemy.local');
 
     const updates: any = {};
     if (name !== undefined) updates.name = name;
     if (phone !== undefined) updates.phone = phone;
     if (favorite_position !== undefined) updates.favorite_position = favorite_position;
+    
+    // Pozwól na zmianę email tylko jeśli użytkownik ma tymczasowy email
+    if (email !== undefined && isTemporaryEmail) {
+      // Sprawdź czy nowy email nie jest już używany
+      if (email && email.trim() !== '') {
+        const existingUser = await db.users.findByEmail(email.trim());
+        if (existingUser && existingUser.id !== parseInt(params.id)) {
+          return NextResponse.json(
+            { error: 'Ten email jest już używany przez innego użytkownika' },
+            { status: 400 }
+          );
+        }
+        updates.email = email.trim();
+      }
+    }
 
     const updatedUser = await db.users.update(parseInt(params.id), updates);
 

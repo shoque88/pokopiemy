@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState<{ type: string; text: string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     phone: '',
     favorite_position: '',
   });
@@ -27,6 +28,7 @@ export default function ProfilePage() {
         setUser(data);
         setFormData({
           name: data.name || '',
+          email: data.email?.endsWith('@pokopiemy.local') ? '' : (data.email || ''),
           phone: data.phone || '',
           favorite_position: data.favorite_position || '',
         });
@@ -73,6 +75,9 @@ export default function ProfilePage() {
     return null;
   }
 
+  // Sprawdź czy email jest tymczasowy (dla użytkowników Facebook bez email)
+  const isTemporaryEmail = user.email?.endsWith('@pokopiemy.local');
+
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto' }}>
       <div className="card">
@@ -89,7 +94,16 @@ export default function ProfilePage() {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>
-            <input type="email" value={user.email} disabled />
+            {isTemporaryEmail ? (
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="Wprowadź swój email"
+              />
+            ) : (
+              <input type="email" value={user.email} disabled />
+            )}
           </div>
 
           <div className="form-group">
