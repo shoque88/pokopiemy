@@ -34,6 +34,7 @@ export async function GET(
           id: user.id,
           name: user.name,
           phone: user.phone,
+          email: user.email,
           preferred_level: user.preferred_level,
         } : null,
       };
@@ -79,6 +80,7 @@ export async function PUT(
       location,
       max_players,
       organizer_phone,
+      organizer_email,
       payment_methods,
       level,
       status,
@@ -120,7 +122,8 @@ export async function PUT(
     if (date_end !== undefined) updates.date_end = date_end;
     if (location !== undefined) updates.location = location;
     if (max_players !== undefined) updates.max_players = max_players;
-    if (organizer_phone !== undefined) updates.organizer_phone = organizer_phone;
+    if (organizer_phone !== undefined) updates.organizer_phone = organizer_phone || null;
+    if (organizer_email !== undefined) updates.organizer_email = organizer_email || null;
     if (payment_methods !== undefined) {
       updates.payment_methods = JSON.stringify(payment_methods);
     }

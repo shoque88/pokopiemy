@@ -75,12 +75,13 @@ export async function GET(request: NextRequest) {
           match_id: reg.match_id,
           user_id: reg.user_id,
           created_at: reg.created_at,
-          user: user ? {
-            id: user.id,
-            name: user.name,
-            phone: user.phone,
-            preferred_level: user.preferred_level,
-          } : null,
+        user: user ? {
+          id: user.id,
+          name: user.name,
+          phone: user.phone,
+          email: user.email,
+          preferred_level: user.preferred_level,
+        } : null,
         };
       }).filter((reg: any) => reg.user !== null);
 
@@ -131,6 +132,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Sprawdź czy użytkownik ma wypełniony telefon lub email
+    if (!user.phone && !user.email) {
+      return NextResponse.json(
+        { error: 'Aby utworzyć mecz, musisz wypełnić numer telefonu lub adres email w profilu' },
+        { status: 400 }
+      );
+    }
+
     const {
       name,
       description,
@@ -139,6 +148,7 @@ export async function POST(request: NextRequest) {
       location,
       max_players,
       organizer_phone,
+      organizer_email,
       payment_methods,
       level,
       is_recurring,
@@ -149,13 +159,24 @@ export async function POST(request: NextRequest) {
       is_free,
     } = await request.json();
 
-    // Dla zwykłych użytkowników, użyj ich telefonu jako organizer_phone (jeśli nie podano)
-    // Admini mogą podać własny telefon
+    // Dla zwykłych użytkowników, użyj ich telefonu/email jako organizer_phone/organizer_email (jeśli nie podano)
+    // Admini mogą podać własny telefon/email
     const finalOrganizerPhone = authUser.isAdmin 
-      ? (organizer_phone || user.phone || '')
-      : (user.phone || organizer_phone || '');
+      ? (organizer_phone || user.phone || null)
+      : (user.phone || organizer_phone || null);
+    const finalOrganizerEmail = authUser.isAdmin
+      ? (organizer_email || user.email || null)
+      : (user.email || organizer_email || null);
 
-    if (!name || !date_start || !date_end || !location || !max_players || !finalOrganizerPhone || !level) {
+    // Upewnij się, że przynajmniej jeden z tych pól jest wypełniony
+    if (!finalOrganizerPhone && !finalOrganizerEmail) {
+      return NextResponse.json(
+        { error: 'Musisz podać numer telefonu lub adres email organizatora' },
+        { status: 400 }
+      );
+    }
+
+    if (!name || !date_start || !date_end || !location || !max_players || !level) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -170,6 +191,7 @@ export async function POST(request: NextRequest) {
       location,
       max_players,
       organizer_phone: finalOrganizerPhone,
+      organizer_email: finalOrganizerEmail,
       payment_methods: JSON.stringify(payment_methods || []),
       level: level || 'kopanina',
       status: 'active',
