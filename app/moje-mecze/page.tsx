@@ -13,7 +13,8 @@ interface Match {
   date_end: string;
   location: string;
   status: string;
-  registration_id: number;
+  registration_id: number | null;
+  isCreatedByUser?: boolean;
 }
 
 export default function MyMatchesPage() {
@@ -55,16 +56,23 @@ export default function MyMatchesPage() {
       const matchesRes = await fetch('/api/matches?status=');
       const allMatches = await matchesRes.json();
 
-      // Filtruj mecze, na które użytkownik jest zapisany
+      // Filtruj mecze:
+      // 1. Na które użytkownik jest zapisany
+      // 2. Utworzone przez użytkownika (organizer_phone = telefon użytkownika)
       const userMatches = allMatches
-        .filter((match: any) =>
-          match.registrations.some((reg: any) => reg.user_id === userData.id)
-        )
+        .filter((match: any) => {
+          // Mecz utworzony przez użytkownika
+          const isCreatedByUser = match.organizer_phone === userData.phone;
+          // Mecz, na który użytkownik jest zapisany
+          const isRegistered = match.registrations.some((reg: any) => reg.user_id === userData.id);
+          return isCreatedByUser || isRegistered;
+        })
         .map((match: any) => {
           const registration = match.registrations.find((reg: any) => reg.user_id === userData.id);
           return {
             ...match,
-            registration_id: registration.id,
+            registration_id: registration?.id || null, // null jeśli użytkownik nie jest zapisany (ale utworzył mecz)
+            isCreatedByUser: match.organizer_phone === userData.phone,
           };
         });
 
@@ -368,13 +376,20 @@ export default function MyMatchesPage() {
                     <Link href={`/mecz/${match.id}`} className="btn btn-secondary">
                       Szczegóły
                     </Link>
-                    <button
-                      onClick={() => handleUnregister(match.registration_id)}
-                      disabled={unregistering === match.registration_id}
-                      className="btn btn-danger"
-                    >
-                      {unregistering === match.registration_id ? 'Anulowanie...' : 'Anuluj udział'}
-                    </button>
+                    {match.registration_id && (
+                      <button
+                        onClick={() => handleUnregister(match.registration_id)}
+                        disabled={unregistering === match.registration_id}
+                        className="btn btn-danger"
+                      >
+                        {unregistering === match.registration_id ? 'Anulowanie...' : 'Anuluj udział'}
+                      </button>
+                    )}
+                    {match.isCreatedByUser && !match.registration_id && (
+                      <span style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>
+                        Twój mecz
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
