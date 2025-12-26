@@ -95,14 +95,22 @@ export async function PUT(
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
     }
 
-    // Jeśli status zmienia się na "canceled", wyślij e-maile
+    // Jeśli status zmienia się na "canceled", usuń wszystkie zapisy i wyślij e-maile
     if (status === 'canceled' && oldMatch.status !== 'canceled') {
+      // Usuń wszystkie zapisy dla odwołanego meczu
+      await db.registrations.deleteByMatch(parseInt(params.id));
+      
       await sendCancelationEmails(
         parseInt(params.id),
         oldMatch.name,
         oldMatch.location,
         oldMatch.date_start
       );
+    }
+
+    // Jeśli status zmienia się na "finished", usuń wszystkie zapisy
+    if (status === 'finished' && oldMatch.status !== 'finished') {
+      await db.registrations.deleteByMatch(parseInt(params.id));
     }
 
     const updates: any = {};
@@ -159,6 +167,9 @@ export async function DELETE(
     if (!authUser || !authUser.isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // Usuń wszystkie zapisy dla tego meczu
+    await db.registrations.deleteByMatch(parseInt(params.id));
 
     const deleted = await db.matches.delete(parseInt(params.id));
 

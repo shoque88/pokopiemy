@@ -55,6 +55,13 @@ export async function PUT(
     if (is_free !== undefined) updates.is_free = is_free ? 1 : 0;
     if (recurrence_frequency !== undefined) updates.recurrence_frequency = recurrence_frequency;
 
+    // Jeśli status zmienił się na 'canceled' lub 'finished', usuń wszystkie zapisy
+    if (status !== undefined && oldMatch.status !== status) {
+      if (status === 'canceled' || status === 'finished') {
+        await db.registrations.deleteByMatch(parseInt(params.id));
+      }
+    }
+
     const updatedMatch = await db.matches.update(parseInt(params.id), updates);
 
     if (!updatedMatch) {
@@ -89,6 +96,9 @@ export async function DELETE(
 ) {
   try {
     await requireSuperuser(request);
+
+    // Usuń wszystkie zapisy dla tego meczu
+    await db.registrations.deleteByMatch(parseInt(params.id));
 
     const deleted = await db.matches.delete(parseInt(params.id));
 

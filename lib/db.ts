@@ -292,6 +292,12 @@ const db = {
       const registrations = await readCollection(REGISTRATIONS_KEY, []);
       return registrations.filter((r: any) => r.match_id === matchId).length;
     },
+    deleteByMatch: async (matchId: number) => {
+      const registrations = await readCollection(REGISTRATIONS_KEY, []);
+      const filtered = registrations.filter((r: any) => r.match_id !== matchId);
+      await writeCollection(REGISTRATIONS_KEY, filtered);
+      return filtered.length < registrations.length;
+    },
   },
 };
 
