@@ -23,6 +23,7 @@ interface Match {
     user: {
       id: number;
       name: string;
+      phone?: string;
       preferred_level?: string;
     };
   }>;
@@ -224,14 +225,31 @@ export default function MatchDetailsPage() {
           <p style={{ color: 'var(--text-light)' }}>Brak zapisanych graczy</p>
         ) : (
           <div className="players-grid">
-            {match.registrations.map((reg) => (
-              <div key={reg.id} className="player-card">
-                <div className="player-name">{reg.user.name}</div>
-                {reg.user.preferred_level && (
-                  <div className="player-position">Poziom: {reg.user.preferred_level}</div>
-                )}
-              </div>
-            ))}
+            {match.registrations.map((reg) => {
+              const isOrganizer = reg.user.phone === match.organizer_phone;
+              return (
+                <div 
+                  key={reg.id} 
+                  className="player-card"
+                  style={isOrganizer ? { border: '2px solid #28a745', backgroundColor: '#f0fff4' } : {}}
+                >
+                  <div className="player-name">{reg.user.name}</div>
+                  {isOrganizer && (
+                    <div style={{ 
+                      fontSize: '0.85rem', 
+                      color: '#28a745', 
+                      fontWeight: 'bold',
+                      marginTop: '0.25rem'
+                    }}>
+                      Organizator
+                    </div>
+                  )}
+                  {reg.user.preferred_level && (
+                    <div className="player-position">Poziom: {reg.user.preferred_level}</div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
