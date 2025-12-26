@@ -43,6 +43,7 @@ export default function SuperuserPanelPage() {
   });
   const [passwordMessage, setPasswordMessage] = useState<{ type: string; text: string } | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
 
   useEffect(() => {
     loadData();
@@ -327,14 +328,38 @@ export default function SuperuserPanelPage() {
 
       {activeTab === 'users' && (
         <div>
-          <h2 style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}>Użytkownicy ({users.length})</h2>
-          {users.length === 0 ? (
-            <div className="empty-state">
-              <h3>Brak użytkowników</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <h2 style={{ margin: 0, color: 'var(--primary-color)' }}>Użytkownicy ({users.length})</h2>
+            <div style={{ flex: '1 1 300px', maxWidth: '400px' }}>
+              <input
+                type="text"
+                placeholder="Szukaj po nazwie użytkownika..."
+                value={userSearchQuery}
+                onChange={(e) => setUserSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  fontSize: '1rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                }}
+              />
             </div>
-          ) : (
-            <div>
-              {users.map((user) => (
+          </div>
+          {(() => {
+            const filteredUsers = userSearchQuery.trim()
+              ? users.filter((user) =>
+                  user.name.toLowerCase().includes(userSearchQuery.toLowerCase())
+                )
+              : users;
+
+            return filteredUsers.length === 0 ? (
+              <div className="empty-state">
+                <h3>{userSearchQuery.trim() ? 'Nie znaleziono użytkowników' : 'Brak użytkowników'}</h3>
+              </div>
+            ) : (
+              <div>
+                {filteredUsers.map((user) => (
                 <div key={user.id} className="card" style={{ marginBottom: '1rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
