@@ -123,6 +123,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Sprawdź czy użytkownik może tworzyć mecze
+    if (user.can_create_matches !== undefined && user.can_create_matches !== 1) {
+      return NextResponse.json(
+        { error: 'Tworzenie meczów jest zablokowane dla Twojego konta' },
+        { status: 403 }
+      );
+    }
+
     const {
       name,
       description,

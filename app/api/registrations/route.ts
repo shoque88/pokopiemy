@@ -12,6 +12,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Sprawdź czy użytkownik może zapisywać się na mecze
+    const user = await db.users.get(authUser.userId);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    if (user.can_register_to_matches !== undefined && user.can_register_to_matches !== 1) {
+      return NextResponse.json(
+        { error: 'Zapisywanie się na mecze jest zablokowane dla Twojego konta' },
+        { status: 403 }
+      );
+    }
+
     const { match_id } = await request.json();
 
     if (!match_id) {

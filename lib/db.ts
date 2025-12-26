@@ -132,17 +132,45 @@ export async function initDatabase() {
   if (!adminExists) {
     const bcrypt = require('bcryptjs');
     const hashedPassword = bcrypt.hashSync('admin123', 10);
+    const maxId = users.length > 0 ? Math.max(...users.map((u: any) => u.id)) : 0;
     const admin = {
-      id: users.length > 0 ? Math.max(...users.map((u: any) => u.id)) + 1 : 1,
+      id: maxId + 1,
       name: 'Admin',
       email: 'admin@pokopiemy.pl',
       password: hashedPassword,
       phone: '+48123456789',
       preferred_level: null,
       is_admin: 1,
+      is_superuser: 0,
+      can_create_matches: 1,
+      can_register_to_matches: 1,
       created_at: new Date().toISOString(),
     };
     users.push(admin);
+    await writeCollection(USERS_KEY, users);
+  }
+  
+  // Utworzenie superusera (jeśli nie istnieje)
+  const superuserExists = users.some((u: any) => u.is_superuser === 1);
+  if (!superuserExists) {
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = bcrypt.hashSync('superuser123', 10);
+    const maxId = users.length > 0 ? Math.max(...users.map((u: any) => u.id)) : 0;
+    const superuser = {
+      id: maxId + 1,
+      name: 'Superuser',
+      email: 'superuser@pokopiemy.pl',
+      username: 'superuser',
+      password: hashedPassword,
+      phone: null,
+      preferred_level: null,
+      is_admin: 0,
+      is_superuser: 1,
+      can_create_matches: 1,
+      can_register_to_matches: 1,
+      created_at: new Date().toISOString(),
+    };
+    users.push(superuser);
     await writeCollection(USERS_KEY, users);
   }
 }
@@ -162,6 +190,10 @@ const db = {
     findByOAuth: async (provider: string, oauthId: string) => {
       const users = await readCollection(USERS_KEY, []);
       return users.find((u: any) => u.oauth_provider === provider && u.oauth_id === oauthId);
+    },
+    findByUsername: async (username: string) => {
+      const users = await readCollection(USERS_KEY, []);
+      return users.find((u: any) => u.username === username);
     },
     create: async (user: any) => {
       const users = await readCollection(USERS_KEY, []);
