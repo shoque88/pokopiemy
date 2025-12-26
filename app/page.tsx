@@ -83,10 +83,10 @@ export default function HomePage() {
       <div className="filters">
         <form onSubmit={(e) => { e.preventDefault(); loadMatches(); }}>
           <div className="form-group">
-            <label>Lokalizacja</label>
+            <label>Szukaj</label>
             <input
               type="text"
-              placeholder="Szukaj po lokalizacji..."
+              placeholder="Szukaj po nazwie lub lokalizacji"
               value={filters.location}
               onChange={(e) => setFilters({ ...filters, location: e.target.value })}
             />
