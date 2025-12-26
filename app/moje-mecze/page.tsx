@@ -246,6 +246,8 @@ export default function MyMatchesPage() {
                 registration_end_time: '',
                 entry_fee: '',
                 is_free: false,
+                is_recurring: false,
+                recurrence_frequency: '',
               });
             }
           }}
