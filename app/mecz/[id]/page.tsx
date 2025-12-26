@@ -12,7 +12,8 @@ interface Match {
   date_end: string;
   location: string;
   max_players: number;
-  organizer_phone: string;
+  organizer_phone?: string;
+  organizer_email?: string;
   payment_methods: string[];
   status: string;
   level: string;
@@ -24,6 +25,7 @@ interface Match {
       id: number;
       name: string;
       phone?: string;
+      email?: string;
       preferred_level?: string;
     };
   }>;
