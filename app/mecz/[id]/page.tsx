@@ -37,6 +37,7 @@ export default function MatchDetailsPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
+  const [canceling, setCanceling] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string } | null>(null);
 
   useEffect(() => {
@@ -136,8 +137,42 @@ export default function MatchDetailsPage() {
     return format(parseISO(dateString), 'HH:mm');
   };
 
+  const handleCancelMatch = async () => {
+    if (!match || !user) return;
+
+    if (!confirm('Czy na pewno chcesz odwołać ten mecz? Wszyscy zapisani gracze otrzymają powiadomienie.')) {
+      return;
+    }
+
+    setCanceling(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch(`/api/matches/${match.id}/cancel`, {
+        method: 'POST',
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Mecz został odwołany' });
+        loadMatch();
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Błąd podczas odwoływania meczu' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Błąd podczas odwoływania meczu' });
+    } finally {
+      setCanceling(false);
+    }
+  };
+
   const isRegistered = user && match?.registrations.some((r) => r.user.id === user.id);
   const isFull = match ? match.registered_count >= match.max_players : false;
+  const isOrganizer = user && match && (
+    (user.phone && user.phone === match.organizer_phone) ||
+    (user.email && user.email === match.organizer_email)
+  );
 
   if (loading) {
     return <div className="loading">Ładowanie szczegółów meczu...</div>;
@@ -174,10 +209,16 @@ export default function MatchDetailsPage() {
           <span className="info-label">Lokalizacja</span>
           <span className="info-value">{match.location}</span>
         </div>
-        <div className="info-item">
-          <span className="info-label">Telefon organizatora</span>
-          <span className="info-value">{match.organizer_phone}</span>
-        </div>
+        {(match.organizer_phone || match.organizer_email) && (
+          <div className="info-item">
+            <span className="info-label">Kontakt organizatora</span>
+            <span className="info-value">
+              {match.organizer_phone && match.organizer_email 
+                ? `${match.organizer_phone}, ${match.organizer_email}`
+                : match.organizer_phone || match.organizer_email}
+            </span>
+          </div>
+        )}
         <div className="info-item">
           <span className="info-label">Max graczy</span>
           <span className="info-value">{match.max_players}</span>
@@ -226,7 +267,8 @@ export default function MatchDetailsPage() {
         ) : (
           <div className="players-grid">
             {match.registrations.map((reg) => {
-              const isOrganizer = reg.user.phone === match.organizer_phone;
+              const isOrganizer = (reg.user.phone && reg.user.phone === match.organizer_phone) ||
+                                  (reg.user.email && reg.user.email === match.organizer_email);
               return (
                 <div 
                   key={reg.id} 
@@ -256,22 +298,53 @@ export default function MatchDetailsPage() {
 
       {match.status === 'active' && (
         <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>
-          {isRegistered ? (
-            <button
-              onClick={handleUnregister}
-              disabled={registering}
-              className="btn btn-danger"
-            >
-              {registering ? 'Anulowanie...' : 'Anuluj udział'}
-            </button>
+          {isOrganizer ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <button
+                onClick={handleCancelMatch}
+                disabled={canceling}
+                className="btn btn-danger"
+              >
+                {canceling ? 'Odwoływanie...' : 'Odwołaj mecz'}
+              </button>
+              {isRegistered ? (
+                <button
+                  onClick={handleUnregister}
+                  disabled={registering}
+                  className="btn btn-secondary"
+                >
+                  {registering ? 'Anulowanie...' : 'Anuluj swój udział'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleRegister}
+                  disabled={registering || isFull}
+                  className="btn btn-primary"
+                >
+                  {registering ? 'Zapisywanie...' : isFull ? 'Mecz pełny' : 'Zapisz się'}
+                </button>
+              )}
+            </div>
           ) : (
-            <button
-              onClick={handleRegister}
-              disabled={registering || isFull}
-              className="btn btn-primary"
-            >
-              {registering ? 'Zapisywanie...' : isFull ? 'Mecz pełny' : 'Zapisz się'}
-            </button>
+            <>
+              {isRegistered ? (
+                <button
+                  onClick={handleUnregister}
+                  disabled={registering}
+                  className="btn btn-danger"
+                >
+                  {registering ? 'Anulowanie...' : 'Anuluj udział'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleRegister}
+                  disabled={registering || isFull}
+                  className="btn btn-primary"
+                >
+                  {registering ? 'Zapisywanie...' : isFull ? 'Mecz pełny' : 'Zapisz się'}
+                </button>
+              )}
+            </>
           )}
         </div>
       )}

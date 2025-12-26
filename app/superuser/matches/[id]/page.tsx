@@ -12,7 +12,8 @@ interface Match {
   date_end: string;
   location: string;
   max_players: number;
-  organizer_phone: string;
+  organizer_phone?: string;
+  organizer_email?: string;
   payment_methods: string[];
   status: string;
   level: string;
@@ -115,6 +116,16 @@ export default function SuperuserMatchPage() {
           <span className="info-label">Max graczy</span>
           <span className="info-value">{match.max_players}</span>
         </div>
+        {(match.organizer_phone || match.organizer_email) && (
+          <div className="info-item">
+            <span className="info-label">Kontakt organizatora</span>
+            <span className="info-value">
+              {match.organizer_phone && match.organizer_email 
+                ? `${match.organizer_phone}, ${match.organizer_email}`
+                : match.organizer_phone || match.organizer_email}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="players-list">

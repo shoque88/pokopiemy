@@ -28,7 +28,8 @@ export interface Match {
   date_end: string;
   location: string;
   max_players: number;
-  organizer_phone: string;
+  organizer_phone?: string;
+  organizer_email?: string;
   payment_methods: PaymentMethod[];
   status: MatchStatus;
   level: PreferredLevel;

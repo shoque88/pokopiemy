@@ -73,8 +73,9 @@ export default function MyMatchesPage() {
       // Uwaga: jeśli użytkownik nie ma telefonu, nie zobaczy swoich meczów - to jest problem do rozwiązania
       const userMatches = allMatches
         .filter((match: any) => {
-          // Mecz utworzony przez użytkownika (sprawdź po telefonie)
-          const isCreatedByUser = userData.phone && match.organizer_phone === userData.phone;
+          // Mecz utworzony przez użytkownika (sprawdź po telefonie lub emailu)
+          const isCreatedByUser = (userData.phone && match.organizer_phone === userData.phone) ||
+                                  (userData.email && match.organizer_email === userData.email);
           // Mecz, na który użytkownik jest zapisany
           const isRegistered = match.registrations.some((reg: any) => reg.user_id === userData.id);
           return isCreatedByUser || isRegistered;
@@ -84,7 +85,8 @@ export default function MyMatchesPage() {
           return {
             ...match,
             registration_id: registration?.id || null, // null jeśli użytkownik nie jest zapisany (ale utworzył mecz)
-            isCreatedByUser: match.organizer_phone === userData.phone,
+            isCreatedByUser: (userData.phone && match.organizer_phone === userData.phone) ||
+                            (userData.email && match.organizer_email === userData.email),
           };
         });
 
