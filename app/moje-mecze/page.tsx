@@ -396,17 +396,17 @@ export default function MyMatchesPage() {
                   />
                 </div>
               </div>
-            </div>
 
-            <div className="form-group">
-              <label>Maksymalna liczba graczy *</label>
-              <input
-                type="number"
-                required
-                min="1"
-                value={formData.max_players}
-                onChange={(e) => setFormData({ ...formData, max_players: e.target.value })}
-              />
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label>Maksymalna liczba graczy *</label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={formData.max_players}
+                  onChange={(e) => setFormData({ ...formData, max_players: e.target.value })}
+                />
+              </div>
             </div>
 
             <div className="form-group">

@@ -414,10 +414,8 @@ export default function AdminPanelPage() {
                   />
                 </div>
               </div>
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <div className="form-group">
+              <div className="form-group" style={{ marginTop: '1rem' }}>
                 <label>Maksymalna liczba graczy *</label>
                 <input
                   type="number"
@@ -427,6 +425,9 @@ export default function AdminPanelPage() {
                   onChange={(e) => setFormData({ ...formData, max_players: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
 
               <div className="form-group">
                 <label>Telefon organizatora *</label>
