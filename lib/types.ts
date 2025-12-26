@@ -13,6 +13,10 @@ export interface User {
   phone?: string;
   preferred_level?: PreferredLevel;
   is_admin: number;
+  is_superuser?: number;
+  username?: string;
+  can_create_matches?: number;
+  can_register_to_matches?: number;
   created_at: string;
 }
 
