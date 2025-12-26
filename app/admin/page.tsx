@@ -333,43 +333,86 @@ export default function AdminPanelPage() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <div className="form-group">
-                <label>Data rozpoczęcia zapisów</label>
-                <input
-                  type="date"
-                  value={formData.registration_start_date}
-                  onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
-                />
+            <div style={{ 
+              border: '2px solid #28a745', 
+              borderRadius: '8px', 
+              padding: '1.5rem', 
+              marginTop: '1rem',
+              backgroundColor: '#f0fff4'
+            }}>
+              <h3 style={{ 
+                color: '#28a745', 
+                fontWeight: 'bold', 
+                textAlign: 'center', 
+                marginBottom: '1rem',
+                marginTop: 0
+              }}>
+                Zapisy
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>Data rozpoczęcia zapisów</label>
+                  <input
+                    type="date"
+                    value={formData.registration_start_date}
+                    onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Godzina rozpoczęcia zapisów</label>
+                  <input
+                    type="time"
+                    value={formData.registration_start_time}
+                    onChange={(e) => setFormData({ ...formData, registration_start_time: e.target.value })}
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Godzina rozpoczęcia zapisów</label>
-                <input
-                  type="time"
-                  value={formData.registration_start_time}
-                  onChange={(e) => setFormData({ ...formData, registration_start_time: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <div className="form-group">
-                <label>Data zakończenia zapisów</label>
-                <input
-                  type="date"
-                  value={formData.registration_end_date}
-                  onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
-                />
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <div className="checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_recurring}
+                    onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked, recurrence_frequency: e.target.checked ? formData.recurrence_frequency : '' })}
+                  />
+                  <label>Wydarzenie cykliczne</label>
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Godzina zakończenia zapisów</label>
-                <input
-                  type="time"
-                  value={formData.registration_end_time}
-                  onChange={(e) => setFormData({ ...formData, registration_end_time: e.target.value })}
-                />
+              {formData.is_recurring && (
+                <div className="form-group">
+                  <label>Częstotliwość</label>
+                  <select
+                    value={formData.recurrence_frequency}
+                    onChange={(e) => setFormData({ ...formData, recurrence_frequency: e.target.value })}
+                  >
+                    <option value="">Wybierz częstotliwość</option>
+                    <option value="daily">Codziennie</option>
+                    <option value="weekly">Raz w tygodniu</option>
+                    <option value="monthly">Raz w miesiącu</option>
+                  </select>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+                <div className="form-group">
+                  <label>Data zakończenia zapisów</label>
+                  <input
+                    type="date"
+                    value={formData.registration_end_date}
+                    onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Godzina zakończenia zapisów</label>
+                  <input
+                    type="time"
+                    value={formData.registration_end_time}
+                    onChange={(e) => setFormData({ ...formData, registration_end_time: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
 
@@ -471,32 +514,6 @@ export default function AdminPanelPage() {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
-
-            <div className="form-group">
-              <div className="checkbox-item">
-                <input
-                  type="checkbox"
-                  checked={formData.is_recurring}
-                  onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
-                />
-                <label>Wydarzenie cykliczne</label>
-              </div>
-            </div>
-
-            {formData.is_recurring && (
-              <div className="form-group">
-                <label>Częstotliwość</label>
-                <select
-                  value={formData.recurrence_frequency}
-                  onChange={(e) => setFormData({ ...formData, recurrence_frequency: e.target.value })}
-                >
-                  <option value="">Wybierz częstotliwość</option>
-                  <option value="daily">Codziennie</option>
-                  <option value="weekly">Raz w tygodniu</option>
-                  <option value="monthly">Raz w miesiącu</option>
-                </select>
-              </div>
-            )}
 
             <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? 'Zapisywanie...' : editingMatch ? 'Zaktualizuj mecz' : 'Utwórz mecz'}

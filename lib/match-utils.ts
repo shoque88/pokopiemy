@@ -16,7 +16,8 @@ export async function updateMatchStatuses() {
       await db.matches.update(match.id, { status: 'finished' });
 
       // Jeśli mecz jest cykliczny, utwórz nowy mecz
-      if (match.is_recurring && match.recurrence_frequency) {
+      const isRecurring = match.is_recurring === 1 || match.is_recurring === true;
+      if (isRecurring && match.recurrence_frequency) {
         await createNextRecurringMatch(match);
       }
     }
@@ -65,6 +66,10 @@ async function createNextRecurringMatch(match: any) {
     status: 'active',
     is_recurring: match.is_recurring,
     recurrence_frequency: match.recurrence_frequency,
+    registration_start: match.registration_start || null,
+    registration_end: match.registration_end || null,
+    entry_fee: match.entry_fee || null,
+    is_free: match.is_free || 0,
   });
 }
 
