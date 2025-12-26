@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
+import PlacesAutocomplete from '@/components/PlacesAutocomplete';
 
 interface Match {
   id: number;
@@ -295,11 +296,11 @@ export default function AdminPanelPage() {
 
             <div className="form-group">
               <label>Lokalizacja *</label>
-              <input
-                type="text"
-                required
+              <PlacesAutocomplete
                 value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, location: value })}
+                placeholder="Wpisz adres lub nazwę miejsca..."
+                required
               />
             </div>
 

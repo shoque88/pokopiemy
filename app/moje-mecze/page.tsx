@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format, parseISO, isAfter } from 'date-fns';
+import PlacesAutocomplete from '@/components/PlacesAutocomplete';
 
 interface Match {
   id: number;
@@ -276,11 +277,11 @@ export default function MyMatchesPage() {
 
             <div className="form-group">
               <label>Lokalizacja *</label>
-              <input
-                type="text"
-                required
+              <PlacesAutocomplete
                 value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, location: value })}
+                placeholder="Wpisz adres lub nazwę miejsca..."
+                required
               />
             </div>
 
