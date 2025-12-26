@@ -159,6 +159,10 @@ const db = {
       const users = await readCollection(USERS_KEY, []);
       return users.find((u: any) => u.email === email);
     },
+    findByOAuth: async (provider: string, oauthId: string) => {
+      const users = await readCollection(USERS_KEY, []);
+      return users.find((u: any) => u.oauth_provider === provider && u.oauth_id === oauthId);
+    },
     create: async (user: any) => {
       const users = await readCollection(USERS_KEY, []);
       const newId = users.length > 0 ? Math.max(...users.map((u: any) => u.id)) + 1 : 1;
