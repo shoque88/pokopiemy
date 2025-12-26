@@ -11,8 +11,11 @@ export async function updateMatchStatuses() {
   for (const match of activeMatches) {
     const endDate = parseISO(match.date_end);
     
-    // Jeśli mecz się zakończył, zmień status
+    // Jeśli mecz się zakończył, zmień status i usuń wszystkie zapisy
     if (isAfter(now, endDate)) {
+      // Usuń wszystkie zapisy dla zakończonego meczu
+      await db.registrations.deleteByMatch(match.id);
+      
       await db.matches.update(match.id, { status: 'finished' });
 
       // Jeśli mecz jest cykliczny, utwórz nowy mecz
