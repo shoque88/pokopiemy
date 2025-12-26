@@ -52,17 +52,19 @@ export default function MyMatchesPage() {
       const userData = await userRes.json();
       setUser(userData);
 
-      // Pobierz wszystkie mecze użytkownika
-      const matchesRes = await fetch('/api/matches?status=');
+      // Pobierz wszystkie mecze (bez filtrowania po poziomie, aby zobaczyć wszystkie mecze użytkownika)
+      // Używamy parametru skipLevelFilter, aby pominąć filtrowanie po poziomie
+      const matchesRes = await fetch('/api/matches?status=&skipLevelFilter=true');
       const allMatches = await matchesRes.json();
 
       // Filtruj mecze:
       // 1. Na które użytkownik jest zapisany
       // 2. Utworzone przez użytkownika (organizer_phone = telefon użytkownika)
+      // Uwaga: jeśli użytkownik nie ma telefonu, nie zobaczy swoich meczów - to jest problem do rozwiązania
       const userMatches = allMatches
         .filter((match: any) => {
-          // Mecz utworzony przez użytkownika
-          const isCreatedByUser = match.organizer_phone === userData.phone;
+          // Mecz utworzony przez użytkownika (sprawdź po telefonie)
+          const isCreatedByUser = userData.phone && match.organizer_phone === userData.phone;
           // Mecz, na który użytkownik jest zapisany
           const isRegistered = match.registrations.some((reg: any) => reg.user_id === userData.id);
           return isCreatedByUser || isRegistered;

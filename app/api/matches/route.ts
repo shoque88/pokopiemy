@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const location = searchParams.get('location');
     const status = searchParams.get('status') || 'active';
     const dateFrom = searchParams.get('dateFrom');
+    const skipLevelFilter = searchParams.get('skipLevelFilter') === 'true';
 
     // Pobierz zalogowanego użytkownika (jeśli istnieje) do filtrowania po poziomie
     const { getAuthUserOrNextAuth } = await import('@/lib/middleware');
@@ -51,7 +52,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Filtrowanie po poziomie użytkownika (jeśli użytkownik jest zalogowany i ma ustawiony poziom)
-    if (userPreferredLevel) {
+    // Pomijamy filtrowanie jeśli skipLevelFilter=true (np. dla strony "moje mecze")
+    if (userPreferredLevel && !skipLevelFilter) {
       matches = matches.filter((m: any) => m.level === userPreferredLevel);
     }
 
