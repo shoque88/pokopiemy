@@ -17,7 +17,7 @@ function LoginForm() {
     email: '',
     password: '',
     phone: '',
-    favorite_position: '',
+    preferred_level: '',
   });
 
   useEffect(() => {
