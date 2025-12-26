@@ -47,6 +47,7 @@ export async function GET(
       ...match,
       payment_methods: paymentMethods,
       is_recurring: match.is_recurring === 1 || match.is_recurring === true,
+      is_free: match.is_free === 1 || match.is_free === true,
       registrations: registrationsWithUsers,
       registered_count: registrations.length,
     });

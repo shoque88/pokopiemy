@@ -16,6 +16,8 @@ interface Match {
   payment_methods: string[];
   status: string;
   level: string;
+  entry_fee?: string;
+  is_free?: boolean;
   registrations: Array<{
     id: number;
     user: {
@@ -192,6 +194,12 @@ export default function MatchDetailsPage() {
           <span className="info-label">Metody płatności</span>
           <span className="info-value">
             {match.payment_methods.map((m: string) => m === 'cash' ? 'Gotówka' : 'BLIK').join(', ')}
+          </span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">Wpisowe</span>
+          <span className="info-value">
+            {match.is_free ? 'Za darmo' : match.entry_fee || 'Brak informacji'}
           </span>
         </div>
         <div className="info-item">
