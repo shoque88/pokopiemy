@@ -133,6 +133,10 @@ export async function POST(request: NextRequest) {
       level,
       is_recurring,
       recurrence_frequency,
+      registration_start,
+      registration_end,
+      entry_fee,
+      is_free,
     } = await request.json();
 
     // Dla zwykłych użytkowników, użyj ich telefonu jako organizer_phone (jeśli nie podano)
@@ -161,6 +165,10 @@ export async function POST(request: NextRequest) {
       status: 'active',
       is_recurring: is_recurring ? 1 : 0,
       recurrence_frequency: recurrence_frequency || null,
+      registration_start: registration_start || null,
+      registration_end: registration_end || null,
+      entry_fee: entry_fee || null,
+      is_free: is_free ? 1 : 0,
     });
 
     const paymentMethods = typeof newMatch.payment_methods === 'string' 

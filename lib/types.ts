@@ -30,6 +30,10 @@ export interface Match {
   level: PreferredLevel;
   is_recurring: boolean;
   recurrence_frequency?: RecurrenceFrequency;
+  registration_start?: string;
+  registration_end?: string;
+  entry_fee?: string;
+  is_free?: boolean;
   created_at: string;
 }
 

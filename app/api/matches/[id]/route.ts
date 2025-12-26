@@ -83,6 +83,10 @@ export async function PUT(
       status,
       is_recurring,
       recurrence_frequency,
+      registration_start,
+      registration_end,
+      entry_fee,
+      is_free,
     } = await request.json();
 
     const oldMatch = await db.matches.get(parseInt(params.id));
@@ -114,6 +118,10 @@ export async function PUT(
     if (level !== undefined) updates.level = level;
     if (status !== undefined) updates.status = status;
     if (is_recurring !== undefined) updates.is_recurring = is_recurring ? 1 : 0;
+    if (registration_start !== undefined) updates.registration_start = registration_start || null;
+    if (registration_end !== undefined) updates.registration_end = registration_end || null;
+    if (entry_fee !== undefined) updates.entry_fee = entry_fee || null;
+    if (is_free !== undefined) updates.is_free = is_free ? 1 : 0;
     if (recurrence_frequency !== undefined) updates.recurrence_frequency = recurrence_frequency;
 
     const updatedMatch = await db.matches.update(parseInt(params.id), updates);
