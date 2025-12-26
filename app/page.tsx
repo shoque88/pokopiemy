@@ -135,6 +135,7 @@ export default function HomePage() {
                 <span>📅 {formatDateTime(match.date_start)} - {formatTime(match.date_end)}</span>
                 <span>📍 {match.location}</span>
                 <span>👥 {match.registered_count}/{match.max_players} graczy</span>
+                <span>🎯 {match.level === 'kopanina' ? 'Kopanina' : match.level === 'cośtam gramy' ? 'Cośtam gramy' : match.level === 'wannabe pro' ? 'Wannabe pro' : match.level}</span>
                 <span>📞 {match.organizer_phone}</span>
                 <span>💳 {match.payment_methods.map((m: string) => m === 'cash' ? 'Gotówka' : 'BLIK').join(', ')}</span>
               </div>

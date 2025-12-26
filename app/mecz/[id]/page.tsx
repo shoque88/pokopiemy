@@ -15,6 +15,7 @@ interface Match {
   organizer_phone: string;
   payment_methods: string[];
   status: string;
+  level: string;
   registrations: Array<{
     id: number;
     user: {
@@ -177,6 +178,15 @@ export default function MatchDetailsPage() {
         <div className="info-item">
           <span className="info-label">Maksymalna liczba graczy</span>
           <span className="info-value">{match.max_players}</span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">Poziom</span>
+          <span className="info-value">
+            {match.level === 'kopanina' ? 'Kopanina' :
+             match.level === 'cośtam gramy' ? 'Cośtam gramy' :
+             match.level === 'wannabe pro' ? 'Wannabe pro' :
+             match.level}
+          </span>
         </div>
         <div className="info-item">
           <span className="info-label">Metody płatności</span>

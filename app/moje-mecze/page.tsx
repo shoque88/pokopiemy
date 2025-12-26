@@ -14,6 +14,7 @@ interface Match {
   date_end: string;
   location: string;
   status: string;
+  level?: string;
   registration_id: number | null;
   isCreatedByUser?: boolean;
 }
@@ -363,6 +364,9 @@ export default function MyMatchesPage() {
                 <div className="match-meta">
                   <span>📅 {formatDateTime(match.date_start)} - {formatTime(match.date_end)}</span>
                   <span>📍 {match.location}</span>
+                  {match.level && (
+                    <span>🎯 {match.level === 'kopanina' ? 'Kopanina' : match.level === 'cośtam gramy' ? 'Cośtam gramy' : match.level === 'wannabe pro' ? 'Wannabe pro' : match.level}</span>
+                  )}
                 </div>
 
                 <div className="match-footer">
@@ -413,6 +417,9 @@ export default function MyMatchesPage() {
                 <div className="match-meta">
                   <span>📅 {formatDateTime(match.date_start)} - {formatTime(match.date_end)}</span>
                   <span>📍 {match.location}</span>
+                  {match.level && (
+                    <span>🎯 {match.level === 'kopanina' ? 'Kopanina' : match.level === 'cośtam gramy' ? 'Cośtam gramy' : match.level === 'wannabe pro' ? 'Wannabe pro' : match.level}</span>
+                  )}
                 </div>
                 <div className="match-footer">
                   <span className={`status-badge ${
