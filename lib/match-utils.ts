@@ -1,6 +1,6 @@
 import db from './db';
 import { Match, MatchStatus, RecurrenceFrequency } from './types';
-import { format, addDays, addWeeks, addMonths, parseISO, isAfter } from 'date-fns';
+import { format, addDays, addWeeks, addMonths, parseISO, isAfter, differenceInMilliseconds } from 'date-fns';
 import nodemailer from 'nodemailer';
 
 // Funkcja do automatycznego aktualizowania statusu meczów
@@ -48,6 +48,22 @@ async function createNextRecurringMatch(match: any) {
       return;
   }
 
+  // Oblicz odstęp czasowy między datą meczu a datami zapisów i zastosuj do nowych dat
+  let nextRegistrationStart: string | null = null;
+  let nextRegistrationEnd: string | null = null;
+
+  if (match.registration_start) {
+    const originalRegistrationStart = parseISO(match.registration_start);
+    const timeDiff = differenceInMilliseconds(originalRegistrationStart, startDate);
+    nextRegistrationStart = new Date(nextStartDate.getTime() + timeDiff).toISOString();
+  }
+
+  if (match.registration_end) {
+    const originalRegistrationEnd = parseISO(match.registration_end);
+    const timeDiff = differenceInMilliseconds(originalRegistrationEnd, startDate);
+    nextRegistrationEnd = new Date(nextStartDate.getTime() + timeDiff).toISOString();
+  }
+
   // Parse payment_methods if it's a string
   const paymentMethods = typeof match.payment_methods === 'string' 
     ? match.payment_methods 
@@ -66,8 +82,8 @@ async function createNextRecurringMatch(match: any) {
     status: 'active',
     is_recurring: match.is_recurring,
     recurrence_frequency: match.recurrence_frequency,
-    registration_start: match.registration_start || null,
-    registration_end: match.registration_end || null,
+    registration_start: nextRegistrationStart,
+    registration_end: nextRegistrationEnd,
     entry_fee: match.entry_fee || null,
     is_free: match.is_free || 0,
   });

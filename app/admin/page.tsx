@@ -441,26 +441,54 @@ export default function AdminPanelPage() {
             </div>
 
             <div className="form-group">
-              <label>Metody płatności</label>
-              <div className="checkbox-group">
-                <div className="checkbox-item">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                <label style={{ marginBottom: 0 }}>Wpisowe</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <input
                     type="checkbox"
-                    checked={formData.payment_methods.includes('cash')}
-                    onChange={() => togglePaymentMethod('cash')}
+                    checked={formData.is_free}
+                    onChange={(e) => setFormData({ ...formData, is_free: e.target.checked, entry_fee: '', payment_methods: e.target.checked ? [] : formData.payment_methods })}
                   />
-                  <label>Gotówka</label>
-                </div>
-                <div className="checkbox-item">
-                  <input
-                    type="checkbox"
-                    checked={formData.payment_methods.includes('blik')}
-                    onChange={() => togglePaymentMethod('blik')}
-                  />
-                  <label>BLIK</label>
+                  <label style={{ marginBottom: 0, fontWeight: 'normal', whiteSpace: 'nowrap' }}>Za darmo</label>
                 </div>
               </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={formData.entry_fee}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  setFormData({ ...formData, entry_fee: value });
+                }}
+                disabled={formData.is_free}
+                placeholder={formData.is_free ? 'Mecz jest za darmo' : 'Wpisz kwotę wpisowego'}
+              />
             </div>
+
+            {!formData.is_free && (
+              <div className="form-group">
+                <label>Metody płatności</label>
+                <div className="checkbox-group">
+                  <div className="checkbox-item">
+                    <input
+                      type="checkbox"
+                      checked={formData.payment_methods.includes('cash')}
+                      onChange={() => togglePaymentMethod('cash')}
+                    />
+                    <label>Gotówka</label>
+                  </div>
+                  <div className="checkbox-item">
+                    <input
+                      type="checkbox"
+                      checked={formData.payment_methods.includes('blik')}
+                      onChange={() => togglePaymentMethod('blik')}
+                    />
+                    <label>BLIK</label>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="form-group">
               <label>Poziom *</label>
@@ -485,27 +513,6 @@ export default function AdminPanelPage() {
                 <option value="finished">Zakończony</option>
                 <option value="canceled">Odwołany</option>
               </select>
-            </div>
-
-            <div className="form-group">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                <label style={{ marginBottom: 0 }}>Wpisowe</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.is_free}
-                    onChange={(e) => setFormData({ ...formData, is_free: e.target.checked, entry_fee: '' })}
-                  />
-                  <label style={{ marginBottom: 0, fontWeight: 'normal' }}>Za darmo</label>
-                </div>
-              </div>
-              <input
-                type="text"
-                value={formData.entry_fee}
-                onChange={(e) => setFormData({ ...formData, entry_fee: e.target.value })}
-                disabled={formData.is_free}
-                placeholder={formData.is_free ? 'Mecz jest za darmo' : 'Wpisz kwotę wpisowego'}
-              />
             </div>
 
             <div className="form-group">
