@@ -119,12 +119,12 @@ export const authOptions: NextAuthOptions = {
       if (user && account) {
         let dbUser = null;
         
-        // Dla Facebook, sprawdź najpierw po OAuth (nawet jeśli jest email)
-        if (account.provider === 'facebook' && account.providerAccountId) {
-          dbUser = await db.users.findByOAuth('facebook', account.providerAccountId);
+        // Dla OAuth providerów (Facebook, Google), sprawdź najpierw po OAuth ID
+        if (account.providerAccountId) {
+          dbUser = await db.users.findByOAuth(account.provider, account.providerAccountId);
           // Zapisz OAuth ID w tokenie dla przyszłych wywołań
           if (dbUser) {
-            (token as any).oauthProvider = 'facebook';
+            (token as any).oauthProvider = account.provider;
             (token as any).oauthId = account.providerAccountId;
           }
         }
@@ -138,6 +138,11 @@ export const authOptions: NextAuthOptions = {
           token.userId = dbUser.id;
           token.isAdmin = dbUser.is_admin === 1;
           token.email = dbUser.email;
+          // Zawsze zapisz OAuth ID w tokenie dla wszystkich OAuth providerów
+          if (account.providerAccountId) {
+            (token as any).oauthProvider = account.provider;
+            (token as any).oauthId = account.providerAccountId;
+          }
         } else {
           console.error('User not found in database during JWT callback:', {
             provider: account.provider,
@@ -146,7 +151,7 @@ export const authOptions: NextAuthOptions = {
           });
         }
       } else if (token && (token as any).oauthProvider && (token as any).oauthId) {
-        // W kolejnych wywołaniach, jeśli mamy OAuth ID w tokenie, użyj go
+        // W kolejnych wywołaniach, jeśli mamy OAuth ID w tokenie, użyj go (najbardziej niezawodne)
         const dbUser = await db.users.findByOAuth((token as any).oauthProvider, (token as any).oauthId);
         if (dbUser) {
           token.userId = dbUser.id;
@@ -154,7 +159,7 @@ export const authOptions: NextAuthOptions = {
           token.email = dbUser.email;
         }
       } else if (token && token.email) {
-        // W kolejnych wywołaniach, jeśli mamy email w tokenie, użyj go
+        // W kolejnych wywołaniach, jeśli mamy email w tokenie, użyj go (fallback)
         const dbUser = await db.users.findByEmail(token.email as string);
         if (dbUser) {
           token.userId = dbUser.id;
