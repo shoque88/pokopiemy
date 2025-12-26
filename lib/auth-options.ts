@@ -13,6 +13,12 @@ export const authOptions: NextAuthOptions = {
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID || '',
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
+      authorization: {
+        params: {
+          scope: 'public_profile',
+        },
+      },
+      // Pobierz email przez Graph API w callback, jeśli nie został zwrócony
     }),
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID || '',
@@ -22,18 +28,36 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (!user.email) {
+      let userEmail = user.email;
+      
+      // Dla Facebook, jeśli nie ma email, spróbuj pobrać przez Graph API
+      if (!userEmail && account?.provider === 'facebook' && account?.accessToken) {
+        try {
+          const response = await fetch(
+            `https://graph.facebook.com/me?fields=email&access_token=${account.accessToken}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            userEmail = data.email;
+          }
+        } catch (error) {
+          console.error('Error fetching Facebook email:', error);
+        }
+      }
+
+      if (!userEmail) {
+        console.error('No email available for user');
         return false;
       }
 
       // Sprawdź czy użytkownik już istnieje
-      let dbUser = await db.users.findByEmail(user.email);
+      let dbUser = await db.users.findByEmail(userEmail);
 
       if (!dbUser) {
         // Utwórz nowego użytkownika
         dbUser = await db.users.create({
-          name: user.name || user.email.split('@')[0],
-          email: user.email,
+          name: user.name || userEmail.split('@')[0],
+          email: userEmail,
           password: '', // OAuth użytkownicy nie mają hasła
           phone: null,
           favorite_position: null,
