@@ -333,6 +333,32 @@ export default function AdminPanelPage() {
               </div>
             </div>
 
+            <div className="form-group">
+              <div className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={formData.is_recurring}
+                  onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked, recurrence_frequency: e.target.checked ? formData.recurrence_frequency : '' })}
+                />
+                <label>Wydarzenie cykliczne</label>
+              </div>
+            </div>
+
+            {formData.is_recurring && (
+              <div className="form-group">
+                <label>Częstotliwość</label>
+                <select
+                  value={formData.recurrence_frequency}
+                  onChange={(e) => setFormData({ ...formData, recurrence_frequency: e.target.value })}
+                >
+                  <option value="">Wybierz częstotliwość</option>
+                  <option value="daily">Codziennie</option>
+                  <option value="weekly">Raz w tygodniu</option>
+                  <option value="monthly">Raz w miesiącu</option>
+                </select>
+              </div>
+            )}
+
             <div style={{ 
               border: '2px solid #28a745', 
               borderRadius: '8px', 
@@ -368,32 +394,6 @@ export default function AdminPanelPage() {
                   />
                 </div>
               </div>
-
-              <div className="form-group" style={{ marginTop: '1rem' }}>
-                <div className="checkbox-item">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_recurring}
-                    onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked, recurrence_frequency: e.target.checked ? formData.recurrence_frequency : '' })}
-                  />
-                  <label>Wydarzenie cykliczne</label>
-                </div>
-              </div>
-
-              {formData.is_recurring && (
-                <div className="form-group">
-                  <label>Częstotliwość</label>
-                  <select
-                    value={formData.recurrence_frequency}
-                    onChange={(e) => setFormData({ ...formData, recurrence_frequency: e.target.value })}
-                  >
-                    <option value="">Wybierz częstotliwość</option>
-                    <option value="daily">Codziennie</option>
-                    <option value="weekly">Raz w tygodniu</option>
-                    <option value="monthly">Raz w miesiącu</option>
-                  </select>
-                </div>
-              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
                 <div className="form-group">
