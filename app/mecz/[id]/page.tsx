@@ -172,7 +172,7 @@ export default function MatchDetailsPage() {
           <span className="info-value">{match.location}</span>
         </div>
         <div className="info-item">
-          <span className="info-label">Organizator</span>
+          <span className="info-label">Telefon organizatora</span>
           <span className="info-value">{match.organizer_phone}</span>
         </div>
         <div className="info-item">
