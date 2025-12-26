@@ -38,6 +38,8 @@ export default function HomePage() {
     if (filters.location) params.append('location', filters.location);
     if (filters.status) params.append('status', filters.status);
     if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
+    // Pomiń filtrowanie po poziomie na stronie głównej - pokaż wszystkie mecze
+    params.append('skipLevelFilter', 'true');
 
     try {
       const res = await fetch(`/api/matches?${params.toString()}`);
