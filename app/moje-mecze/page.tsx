@@ -22,6 +22,19 @@ export default function MyMatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [unregistering, setUnregistering] = useState<number | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    date_start: '',
+    time_start: '',
+    time_end: '',
+    location: '',
+    max_players: '',
+    payment_methods: [] as string[],
+    level: 'kopanina' as 'kopanina' | 'cośtam gramy' | 'wannabe pro',
+  });
 
   useEffect(() => {
     loadData();
@@ -60,6 +73,65 @@ export default function MyMatchesPage() {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const togglePaymentMethod = (method: string) => {
+    setFormData({
+      ...formData,
+      payment_methods: formData.payment_methods.includes(method)
+        ? formData.payment_methods.filter((m) => m !== method)
+        : [...formData.payment_methods, method],
+    });
+  };
+
+  const handleCreateMatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+
+    try {
+      const dateStart = new Date(`${formData.date_start}T${formData.time_start}`);
+      const dateEnd = new Date(`${formData.date_start}T${formData.time_end}`);
+
+      const matchData = {
+        name: formData.name,
+        description: formData.description,
+        date_start: dateStart.toISOString(),
+        date_end: dateEnd.toISOString(),
+        location: formData.location,
+        max_players: parseInt(formData.max_players),
+        payment_methods: formData.payment_methods,
+        level: formData.level,
+      };
+
+      const res = await fetch('/api/matches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(matchData),
+      });
+
+      if (res.ok) {
+        setShowForm(false);
+        setFormData({
+          name: '',
+          description: '',
+          date_start: '',
+          time_start: '',
+          time_end: '',
+          location: '',
+          max_players: '',
+          payment_methods: [],
+          level: 'kopanina',
+        });
+        loadData();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Błąd podczas tworzenia meczu');
+      }
+    } catch (error) {
+      alert('Błąd podczas tworzenia meczu');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -109,9 +181,151 @@ export default function MyMatchesPage() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: '2rem', color: 'var(--primary-color)' }}>
-        Moje mecze
-      </h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1 style={{ color: 'var(--primary-color)' }}>
+          Moje mecze
+        </h1>
+        <button
+          onClick={() => {
+            setShowForm(!showForm);
+            if (showForm) {
+              setFormData({
+                name: '',
+                description: '',
+                date_start: '',
+                time_start: '',
+                time_end: '',
+                location: '',
+                max_players: '',
+                payment_methods: [],
+                level: 'kopanina',
+              });
+            }
+          }}
+          className="btn btn-primary"
+        >
+          {showForm ? 'Anuluj' : '+ Utwórz mecz'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ marginBottom: '2rem' }}>
+          <h2 style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}>
+            Nowy mecz
+          </h2>
+          <form onSubmit={handleCreateMatch}>
+            <div className="form-group">
+              <label>Nazwa meczu *</label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Opis</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div className="form-group">
+                <label>Data rozpoczęcia *</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.date_start}
+                  onChange={(e) => setFormData({ ...formData, date_start: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Godzina rozpoczęcia *</label>
+                <input
+                  type="time"
+                  required
+                  value={formData.time_start}
+                  onChange={(e) => setFormData({ ...formData, time_start: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Godzina zakończenia *</label>
+                <input
+                  type="time"
+                  required
+                  value={formData.time_end}
+                  onChange={(e) => setFormData({ ...formData, time_end: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Lokalizacja *</label>
+              <input
+                type="text"
+                required
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Maksymalna liczba graczy *</label>
+              <input
+                type="number"
+                required
+                min="1"
+                value={formData.max_players}
+                onChange={(e) => setFormData({ ...formData, max_players: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Metody płatności</label>
+              <div className="checkbox-group">
+                <div className="checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={formData.payment_methods.includes('cash')}
+                    onChange={() => togglePaymentMethod('cash')}
+                  />
+                  <label>Gotówka</label>
+                </div>
+                <div className="checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={formData.payment_methods.includes('blik')}
+                    onChange={() => togglePaymentMethod('blik')}
+                  />
+                  <label>BLIK</label>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Poziom *</label>
+              <select
+                value={formData.level}
+                onChange={(e) => setFormData({ ...formData, level: e.target.value as 'kopanina' | 'cośtam gramy' | 'wannabe pro' })}
+                required
+              >
+                <option value="kopanina">Kopanina</option>
+                <option value="cośtam gramy">Cośtam gramy</option>
+                <option value="wannabe pro">Wannabe pro</option>
+              </select>
+            </div>
+
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Tworzenie...' : 'Utwórz mecz'}
+            </button>
+          </form>
+        </div>
+      )}
 
       <div>
         <h2 style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}>
