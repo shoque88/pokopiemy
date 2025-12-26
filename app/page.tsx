@@ -15,6 +15,7 @@ interface Match {
   organizer_phone: string;
   payment_methods: string[];
   status: string;
+  level: string;
   registered_count: number;
 }
 

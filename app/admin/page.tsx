@@ -15,6 +15,7 @@ interface Match {
   organizer_phone: string;
   payment_methods: string[];
   status: string;
+  level: string;
   is_recurring: boolean;
   recurrence_frequency?: string;
 }
@@ -37,6 +38,7 @@ export default function AdminPanelPage() {
     max_players: '',
     organizer_phone: '',
     payment_methods: [] as string[],
+    level: 'kopanina' as 'kopanina' | 'cośtam gramy' | 'wannabe pro',
     status: 'active',
     is_recurring: false,
     recurrence_frequency: '',
@@ -94,6 +96,7 @@ export default function AdminPanelPage() {
       max_players: match.max_players.toString(),
       organizer_phone: match.organizer_phone,
       payment_methods: match.payment_methods,
+      level: (match as any).level || 'kopanina',
       status: match.status,
       is_recurring: match.is_recurring,
       recurrence_frequency: match.recurrence_frequency || '',
@@ -138,6 +141,7 @@ export default function AdminPanelPage() {
         max_players: parseInt(formData.max_players),
         organizer_phone: formData.organizer_phone,
         payment_methods: formData.payment_methods,
+        level: formData.level,
         status: formData.status,
         is_recurring: formData.is_recurring,
         recurrence_frequency: formData.is_recurring ? formData.recurrence_frequency : null,
@@ -165,6 +169,7 @@ export default function AdminPanelPage() {
           max_players: '',
           organizer_phone: '',
           payment_methods: [],
+          level: 'kopanina',
           status: 'active',
           is_recurring: false,
           recurrence_frequency: '',
@@ -340,6 +345,19 @@ export default function AdminPanelPage() {
                   <label>BLIK</label>
                 </div>
               </div>
+            </div>
+
+            <div className="form-group">
+              <label>Poziom *</label>
+              <select
+                value={formData.level}
+                onChange={(e) => setFormData({ ...formData, level: e.target.value as 'kopanina' | 'cośtam gramy' | 'wannabe pro' })}
+                required
+              >
+                <option value="kopanina">Kopanina</option>
+                <option value="cośtam gramy">Cośtam gramy</option>
+                <option value="wannabe pro">Wannabe pro</option>
+              </select>
             </div>
 
             <div className="form-group">

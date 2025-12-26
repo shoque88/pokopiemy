@@ -13,7 +13,7 @@ export default function ProfilePage() {
     name: '',
     email: '',
     phone: '',
-    favorite_position: '',
+    preferred_level: '',
   });
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function ProfilePage() {
           name: data.name || '',
           email: data.email?.endsWith('@pokopiemy.local') ? '' : (data.email || ''),
           phone: data.phone || '',
-          favorite_position: data.favorite_position || '',
+          preferred_level: data.preferred_level || '',
         });
       } else {
         router.push('/login');
@@ -126,16 +126,15 @@ export default function ProfilePage() {
           </div>
 
           <div className="form-group">
-            <label>Ulubiona pozycja</label>
+            <label>Preferowany poziom</label>
             <select
-              value={formData.favorite_position}
-              onChange={(e) => setFormData({ ...formData, favorite_position: e.target.value })}
+              value={formData.preferred_level}
+              onChange={(e) => setFormData({ ...formData, preferred_level: e.target.value })}
             >
-              <option value="">Wybierz pozycję</option>
-              <option value="Bramkarz">Bramkarz</option>
-              <option value="Obrońca">Obrońca</option>
-              <option value="Pomocnik">Pomocnik</option>
-              <option value="Napastnik">Napastnik</option>
+              <option value="">Wybierz poziom</option>
+              <option value="kopanina">Kopanina</option>
+              <option value="cośtam gramy">Cośtam gramy</option>
+              <option value="wannabe pro">Wannabe pro</option>
             </select>
           </div>
 

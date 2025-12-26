@@ -138,7 +138,7 @@ export async function initDatabase() {
       email: 'admin@pokopiemy.pl',
       password: hashedPassword,
       phone: '+48123456789',
-      favorite_position: 'Bramkarz',
+      preferred_level: null,
       is_admin: 1,
       created_at: new Date().toISOString(),
     };

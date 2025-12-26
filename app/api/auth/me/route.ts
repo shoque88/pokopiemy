@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      favorite_position: user.favorite_position,
+      preferred_level: user.preferred_level,
       is_admin: user.is_admin === 1,
     });
   } catch (error) {

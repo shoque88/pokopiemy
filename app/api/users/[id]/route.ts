@@ -20,7 +20,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { name, email, phone, favorite_position } = await request.json();
+    const { name, email, phone, preferred_level } = await request.json();
 
     // Pobierz aktualnego użytkownika, aby sprawdzić czy ma tymczasowy email
     const currentUser = await db.users.get(parseInt(params.id));
@@ -33,7 +33,7 @@ export async function PUT(
     const updates: any = {};
     if (name !== undefined) updates.name = name;
     if (phone !== undefined) updates.phone = phone;
-    if (favorite_position !== undefined) updates.favorite_position = favorite_position;
+    if (preferred_level !== undefined) updates.preferred_level = preferred_level;
     
     // Pozwól na zmianę email tylko jeśli użytkownik ma tymczasowy email
     if (email !== undefined && isTemporaryEmail) {
@@ -61,7 +61,7 @@ export async function PUT(
       name: updatedUser.name,
       email: updatedUser.email,
       phone: updatedUser.phone,
-      favorite_position: updatedUser.favorite_position,
+      preferred_level: updatedUser.preferred_level,
       is_admin: updatedUser.is_admin === 1,
     });
   } catch (error) {

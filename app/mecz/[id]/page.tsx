@@ -20,7 +20,7 @@ interface Match {
     user: {
       id: number;
       name: string;
-      favorite_position?: string;
+      preferred_level?: string;
     };
   }>;
   registered_count: number;
@@ -209,8 +209,8 @@ export default function MatchDetailsPage() {
             {match.registrations.map((reg) => (
               <div key={reg.id} className="player-card">
                 <div className="player-name">{reg.user.name}</div>
-                {reg.user.favorite_position && (
-                  <div className="player-position">Pozycja: {reg.user.favorite_position}</div>
+                {reg.user.preferred_level && (
+                  <div className="player-position">Poziom: {reg.user.preferred_level}</div>
                 )}
               </div>
             ))}

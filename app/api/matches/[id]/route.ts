@@ -34,7 +34,7 @@ export async function GET(
           id: user.id,
           name: user.name,
           phone: user.phone,
-          favorite_position: user.favorite_position,
+          preferred_level: user.preferred_level,
         } : null,
       };
     }).filter((reg: any) => reg.user !== null);
@@ -79,6 +79,7 @@ export async function PUT(
       max_players,
       organizer_phone,
       payment_methods,
+      level,
       status,
       is_recurring,
       recurrence_frequency,
@@ -110,6 +111,7 @@ export async function PUT(
     if (payment_methods !== undefined) {
       updates.payment_methods = JSON.stringify(payment_methods);
     }
+    if (level !== undefined) updates.level = level;
     if (status !== undefined) updates.status = status;
     if (is_recurring !== undefined) updates.is_recurring = is_recurring ? 1 : 0;
     if (recurrence_frequency !== undefined) updates.recurrence_frequency = recurrence_frequency;
