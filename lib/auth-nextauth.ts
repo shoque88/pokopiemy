@@ -13,9 +13,20 @@ export async function getSession() {
 export async function getCurrentUser() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !(session as any).userId) {
+    if (!session) {
+      console.log('No session found in getCurrentUser');
       return null;
     }
+    
+    if (!(session as any).userId) {
+      console.log('Session found but no userId:', {
+        hasUser: !!session.user,
+        userEmail: session.user?.email,
+        sessionKeys: Object.keys(session),
+      });
+      return null;
+    }
+    
     return {
       id: (session as any).userId,
       email: session.user?.email,

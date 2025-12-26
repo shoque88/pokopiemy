@@ -119,16 +119,18 @@ export const authOptions: NextAuthOptions = {
       if (user && account) {
         let dbUser = null;
         
-        // Dla Facebook bez email, szukaj po OAuth
-        if (account.provider === 'facebook' && !user.email && account.providerAccountId) {
+        // Dla Facebook, sprawdź najpierw po OAuth (nawet jeśli jest email)
+        if (account.provider === 'facebook' && account.providerAccountId) {
           dbUser = await db.users.findByOAuth('facebook', account.providerAccountId);
           // Zapisz OAuth ID w tokenie dla przyszłych wywołań
           if (dbUser) {
             (token as any).oauthProvider = 'facebook';
             (token as any).oauthId = account.providerAccountId;
           }
-        } else if (user.email) {
-          // Dla innych przypadków, szukaj po email
+        }
+        
+        // Jeśli nie znaleziono po OAuth, spróbuj po email
+        if (!dbUser && user.email) {
           dbUser = await db.users.findByEmail(user.email);
         }
 
@@ -136,6 +138,12 @@ export const authOptions: NextAuthOptions = {
           token.userId = dbUser.id;
           token.isAdmin = dbUser.is_admin === 1;
           token.email = dbUser.email;
+        } else {
+          console.error('User not found in database during JWT callback:', {
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+            userEmail: user.email,
+          });
         }
       } else if (token && (token as any).oauthProvider && (token as any).oauthId) {
         // W kolejnych wywołaniach, jeśli mamy OAuth ID w tokenie, użyj go
@@ -159,6 +167,16 @@ export const authOptions: NextAuthOptions = {
       if (session.user && token) {
         (session as any).userId = token.userId;
         (session as any).isAdmin = token.isAdmin;
+        
+        // Logowanie dla debugowania
+        if (!token.userId) {
+          console.log('Session callback: token.userId is missing', {
+            hasToken: !!token,
+            tokenKeys: token ? Object.keys(token) : [],
+            hasUser: !!session.user,
+            userEmail: session.user?.email,
+          });
+        }
       }
       return session;
     },
