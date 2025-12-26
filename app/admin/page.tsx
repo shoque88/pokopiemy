@@ -225,6 +225,7 @@ export default function AdminPanelPage() {
               max_players: '',
               organizer_phone: '',
               payment_methods: [],
+              level: 'kopanina',
               status: 'active',
               is_recurring: false,
               recurrence_frequency: '',
