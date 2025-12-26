@@ -376,9 +376,9 @@ export default function MyMatchesPage() {
                     <Link href={`/mecz/${match.id}`} className="btn btn-secondary">
                       Szczegóły
                     </Link>
-                    {match.registration_id && (
+                    {match.registration_id !== null && (
                       <button
-                        onClick={() => handleUnregister(match.registration_id)}
+                        onClick={() => handleUnregister(match.registration_id!)}
                         disabled={unregistering === match.registration_id}
                         className="btn btn-danger"
                       >
