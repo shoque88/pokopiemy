@@ -37,6 +37,12 @@ export default function MyMatchesPage() {
     max_players: '',
     payment_methods: [] as string[],
     level: 'kopanina' as 'kopanina' | 'cośtam gramy' | 'wannabe pro',
+    registration_start_date: '',
+    registration_start_time: '',
+    registration_end_date: '',
+    registration_end_time: '',
+    entry_fee: '',
+    is_free: false,
   });
 
   useEffect(() => {
@@ -105,6 +111,13 @@ export default function MyMatchesPage() {
       const dateStart = new Date(`${formData.date_start}T${formData.time_start}`);
       const dateEnd = new Date(`${formData.date_start}T${formData.time_end}`);
 
+      const registrationStart = formData.registration_start_date && formData.registration_start_time
+        ? new Date(`${formData.registration_start_date}T${formData.registration_start_time}`).toISOString()
+        : undefined;
+      const registrationEnd = formData.registration_end_date && formData.registration_end_time
+        ? new Date(`${formData.registration_end_date}T${formData.registration_end_time}`).toISOString()
+        : undefined;
+
       const matchData = {
         name: formData.name,
         description: formData.description,
@@ -114,6 +127,10 @@ export default function MyMatchesPage() {
         max_players: parseInt(formData.max_players),
         payment_methods: formData.payment_methods,
         level: formData.level,
+        registration_start: registrationStart,
+        registration_end: registrationEnd,
+        entry_fee: formData.is_free ? undefined : formData.entry_fee,
+        is_free: formData.is_free,
       };
 
       const res = await fetch('/api/matches', {
@@ -134,6 +151,12 @@ export default function MyMatchesPage() {
           max_players: '',
           payment_methods: [],
           level: 'kopanina',
+          registration_start_date: '',
+          registration_start_time: '',
+          registration_end_date: '',
+          registration_end_time: '',
+          entry_fee: '',
+          is_free: false,
         });
         loadData();
       } else {
@@ -211,6 +234,12 @@ export default function MyMatchesPage() {
                 max_players: '',
                 payment_methods: [],
                 level: 'kopanina',
+                registration_start_date: '',
+                registration_start_time: '',
+                registration_end_date: '',
+                registration_end_time: '',
+                entry_fee: '',
+                is_free: false,
               });
             }
           }}
@@ -227,20 +256,22 @@ export default function MyMatchesPage() {
           </h2>
           <form onSubmit={handleCreateMatch}>
             <div className="form-group">
+              <label>Lokalizacja *</label>
+              <PlacesAutocomplete
+                value={formData.location}
+                onChange={(value) => setFormData({ ...formData, location: value })}
+                placeholder="Wpisz adres lub nazwę miejsca..."
+                required
+              />
+            </div>
+
+            <div className="form-group">
               <label>Nazwa meczu *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Opis</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
 
@@ -276,14 +307,44 @@ export default function MyMatchesPage() {
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Lokalizacja *</label>
-              <PlacesAutocomplete
-                value={formData.location}
-                onChange={(value) => setFormData({ ...formData, location: value })}
-                placeholder="Wpisz adres lub nazwę miejsca..."
-                required
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div className="form-group">
+                <label>Data rozpoczęcia zapisów</label>
+                <input
+                  type="date"
+                  value={formData.registration_start_date}
+                  onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Godzina rozpoczęcia zapisów</label>
+                <input
+                  type="time"
+                  value={formData.registration_start_time}
+                  onChange={(e) => setFormData({ ...formData, registration_start_time: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div className="form-group">
+                <label>Data zakończenia zapisów</label>
+                <input
+                  type="date"
+                  value={formData.registration_end_date}
+                  onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Godzina zakończenia zapisów</label>
+                <input
+                  type="time"
+                  value={formData.registration_end_time}
+                  onChange={(e) => setFormData({ ...formData, registration_end_time: e.target.value })}
+                />
+              </div>
             </div>
 
             <div className="form-group">
@@ -320,6 +381,27 @@ export default function MyMatchesPage() {
             </div>
 
             <div className="form-group">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                <label style={{ marginBottom: 0 }}>Wpisowe</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.is_free}
+                    onChange={(e) => setFormData({ ...formData, is_free: e.target.checked, entry_fee: '' })}
+                  />
+                  <label style={{ marginBottom: 0, fontWeight: 'normal' }}>Za darmo</label>
+                </div>
+              </div>
+              <input
+                type="text"
+                value={formData.entry_fee}
+                onChange={(e) => setFormData({ ...formData, entry_fee: e.target.value })}
+                disabled={formData.is_free}
+                placeholder={formData.is_free ? 'Mecz jest za darmo' : 'Wpisz kwotę wpisowego'}
+              />
+            </div>
+
+            <div className="form-group">
               <label>Poziom *</label>
               <select
                 value={formData.level}
@@ -330,6 +412,14 @@ export default function MyMatchesPage() {
                 <option value="cośtam gramy">Cośtam gramy</option>
                 <option value="wannabe pro">Wannabe pro</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <label>Uwagi</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={saving}>

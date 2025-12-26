@@ -43,6 +43,12 @@ export default function AdminPanelPage() {
     status: 'active',
     is_recurring: false,
     recurrence_frequency: '',
+    registration_start_date: '',
+    registration_start_time: '',
+    registration_end_date: '',
+    registration_end_time: '',
+    entry_fee: '',
+    is_free: false,
   });
 
   useEffect(() => {
@@ -85,6 +91,8 @@ export default function AdminPanelPage() {
   const handleEdit = (match: Match) => {
     const startDate = parseISO(match.date_start);
     const endDate = parseISO(match.date_end);
+    const registrationStart = (match as any).registration_start ? parseISO((match as any).registration_start) : null;
+    const registrationEnd = (match as any).registration_end ? parseISO((match as any).registration_end) : null;
 
     setEditingMatch(match);
     setFormData({
@@ -101,6 +109,12 @@ export default function AdminPanelPage() {
       status: match.status,
       is_recurring: match.is_recurring,
       recurrence_frequency: match.recurrence_frequency || '',
+      registration_start_date: registrationStart ? format(registrationStart, 'yyyy-MM-dd') : '',
+      registration_start_time: registrationStart ? format(registrationStart, 'HH:mm') : '',
+      registration_end_date: registrationEnd ? format(registrationEnd, 'yyyy-MM-dd') : '',
+      registration_end_time: registrationEnd ? format(registrationEnd, 'HH:mm') : '',
+      entry_fee: (match as any).entry_fee || '',
+      is_free: (match as any).is_free === 1 || (match as any).is_free === true || false,
     });
     setShowForm(true);
   };
@@ -133,6 +147,13 @@ export default function AdminPanelPage() {
       const dateStart = new Date(`${formData.date_start}T${formData.time_start}`);
       const dateEnd = new Date(`${formData.date_start}T${formData.time_end}`);
 
+      const registrationStart = formData.registration_start_date && formData.registration_start_time
+        ? new Date(`${formData.registration_start_date}T${formData.registration_start_time}`).toISOString()
+        : undefined;
+      const registrationEnd = formData.registration_end_date && formData.registration_end_time
+        ? new Date(`${formData.registration_end_date}T${formData.registration_end_time}`).toISOString()
+        : undefined;
+
       const matchData = {
         name: formData.name,
         description: formData.description,
@@ -146,6 +167,10 @@ export default function AdminPanelPage() {
         status: formData.status,
         is_recurring: formData.is_recurring,
         recurrence_frequency: formData.is_recurring ? formData.recurrence_frequency : null,
+        registration_start: registrationStart,
+        registration_end: registrationEnd,
+        entry_fee: formData.is_free ? undefined : formData.entry_fee,
+        is_free: formData.is_free,
       };
 
       const url = editingMatch ? `/api/matches/${editingMatch.id}` : '/api/matches';
@@ -174,6 +199,12 @@ export default function AdminPanelPage() {
           status: 'active',
           is_recurring: false,
           recurrence_frequency: '',
+          registration_start_date: '',
+          registration_start_time: '',
+          registration_end_date: '',
+          registration_end_time: '',
+          entry_fee: '',
+          is_free: false,
         });
         loadMatches();
       } else {
@@ -230,6 +261,12 @@ export default function AdminPanelPage() {
               status: 'active',
               is_recurring: false,
               recurrence_frequency: '',
+              registration_start_date: '',
+              registration_start_time: '',
+              registration_end_date: '',
+              registration_end_time: '',
+              entry_fee: '',
+              is_free: false,
             });
           }}
           className="btn btn-primary"
@@ -245,20 +282,22 @@ export default function AdminPanelPage() {
           </h2>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
+              <label>Lokalizacja *</label>
+              <PlacesAutocomplete
+                value={formData.location}
+                onChange={(value) => setFormData({ ...formData, location: value })}
+                placeholder="Wpisz adres lub nazwę miejsca..."
+                required
+              />
+            </div>
+
+            <div className="form-group">
               <label>Nazwa meczu *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Opis</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
 
@@ -294,14 +333,44 @@ export default function AdminPanelPage() {
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Lokalizacja *</label>
-              <PlacesAutocomplete
-                value={formData.location}
-                onChange={(value) => setFormData({ ...formData, location: value })}
-                placeholder="Wpisz adres lub nazwę miejsca..."
-                required
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div className="form-group">
+                <label>Data rozpoczęcia zapisów</label>
+                <input
+                  type="date"
+                  value={formData.registration_start_date}
+                  onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Godzina rozpoczęcia zapisów</label>
+                <input
+                  type="time"
+                  value={formData.registration_start_time}
+                  onChange={(e) => setFormData({ ...formData, registration_start_time: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div className="form-group">
+                <label>Data zakończenia zapisów</label>
+                <input
+                  type="date"
+                  value={formData.registration_end_date}
+                  onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Godzina zakończenia zapisów</label>
+                <input
+                  type="time"
+                  value={formData.registration_end_time}
+                  onChange={(e) => setFormData({ ...formData, registration_end_time: e.target.value })}
+                />
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
@@ -372,6 +441,35 @@ export default function AdminPanelPage() {
                 <option value="finished">Zakończony</option>
                 <option value="canceled">Odwołany</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                <label style={{ marginBottom: 0 }}>Wpisowe</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.is_free}
+                    onChange={(e) => setFormData({ ...formData, is_free: e.target.checked, entry_fee: '' })}
+                  />
+                  <label style={{ marginBottom: 0, fontWeight: 'normal' }}>Za darmo</label>
+                </div>
+              </div>
+              <input
+                type="text"
+                value={formData.entry_fee}
+                onChange={(e) => setFormData({ ...formData, entry_fee: e.target.value })}
+                disabled={formData.is_free}
+                placeholder={formData.is_free ? 'Mecz jest za darmo' : 'Wpisz kwotę wpisowego'}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Uwagi</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
             </div>
 
             <div className="form-group">
