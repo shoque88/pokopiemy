@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
     let userPreferredLevel: string | null = null;
     
     if (authUser) {
+      // authUser.userId jest już zweryfikowane w getAuthUserOrNextAuth
       const user = await db.users.get(authUser.userId);
       if (user && user.preferred_level) {
         userPreferredLevel = user.preferred_level;
@@ -119,8 +120,10 @@ export async function POST(request: NextRequest) {
     }
     
     // Pobierz dane użytkownika
+    // authUser.userId jest już zweryfikowane w getAuthUserOrNextAuth
     const user = await db.users.get(authUser.userId);
     if (!user) {
+      console.error('POST /api/matches: User not found (should not happen)', { userId: authUser.userId });
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 

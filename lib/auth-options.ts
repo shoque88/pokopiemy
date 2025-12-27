@@ -159,10 +159,15 @@ export const authOptions: NextAuthOptions = {
           token.isAdmin = dbUser.is_admin === 1;
           token.email = dbUser.email;
         } else {
-          console.error('JWT refresh: User not found by OAuth ID', {
+          console.error('JWT refresh: User not found by OAuth ID - clearing userId from token', {
             provider: (token as any).oauthProvider,
             oauthId: (token as any).oauthId,
+            oldUserId: token.userId,
           });
+          // Wyczyść userId z tokenu, jeśli użytkownik nie istnieje w bazie
+          delete token.userId;
+          delete token.isAdmin;
+          delete token.email;
         }
       } else if (token && token.email && !(token as any).oauthProvider) {
         // W kolejnych wywołaniach, jeśli mamy email w tokenie i NIE jest to OAuth, użyj go (fallback tylko dla nie-OAuth)
@@ -170,23 +175,40 @@ export const authOptions: NextAuthOptions = {
         if (dbUser) {
           token.userId = dbUser.id;
           token.isAdmin = dbUser.is_admin === 1;
+        } else {
+          // Wyczyść userId z tokenu, jeśli użytkownik nie istnieje
+          console.error('JWT refresh: User not found by email - clearing userId from token', {
+            email: token.email,
+            oldUserId: token.userId,
+          });
+          delete token.userId;
+          delete token.isAdmin;
         }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token) {
-        (session as any).userId = token.userId;
-        (session as any).isAdmin = token.isAdmin;
-        
-        // Logowanie dla debugowania
-        if (!token.userId) {
-          console.log('Session callback: token.userId is missing', {
+        // Ustaw userId tylko jeśli istnieje w tokenie (jeśli użytkownik istnieje w bazie)
+        if (token.userId) {
+          (session as any).userId = token.userId;
+          (session as any).isAdmin = token.isAdmin || false;
+          // Zapisz OAuth provider i ID w sesji, jeśli są dostępne (dla łatwiejszej identyfikacji)
+          if ((token as any).oauthProvider && (token as any).oauthId) {
+            (session as any).oauthProvider = (token as any).oauthProvider;
+            (session as any).oauthId = (token as any).oauthId;
+          }
+        } else {
+          // Jeśli nie ma userId w tokenie, użytkownik nie jest zalogowany (nie istnieje w bazie)
+          console.log('Session callback: token.userId is missing - user not authenticated', {
             hasToken: !!token,
             tokenKeys: token ? Object.keys(token) : [],
             hasUser: !!session.user,
             userEmail: session.user?.email,
+            oauthProvider: (token as any).oauthProvider,
+            oauthId: (token as any).oauthId,
           });
+          // Nie ustawiaj userId - sesja będzie bez userId, co oznacza, że użytkownik nie jest zalogowany
         }
       }
       return session;

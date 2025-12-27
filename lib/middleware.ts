@@ -23,19 +23,30 @@ export async function getAuthUserOrNextAuth(request: NextRequest) {
   // Najpierw sprawdź JWT (dla użytkowników email/hasło)
   const jwtUser = getAuthUser(request);
   if (jwtUser) {
+    // Sprawdź, czy użytkownik rzeczywiście istnieje w bazie danych
+    const db = await import('./db');
+    const user = await db.default.users.get(jwtUser.userId);
+    if (!user) {
+      console.error('getAuthUserOrNextAuth: JWT user does not exist in database', { userId: jwtUser.userId });
+      return null;
+    }
     return {
-      userId: jwtUser.userId,
-      isAdmin: jwtUser.isAdmin || false,
+      userId: user.id,
+      isAdmin: user.is_admin === 1,
+      isOAuth: false,
     };
   }
 
   // Jeśli nie ma JWT, sprawdź NextAuth session (dla OAuth użytkowników)
   const nextAuthUser = await getCurrentUser();
   if (nextAuthUser) {
-    console.log('getAuthUserOrNextAuth: NextAuth user found', { userId: nextAuthUser.id, isAdmin: nextAuthUser.isAdmin });
+    console.log('getAuthUserOrNextAuth: NextAuth user found', { userId: nextAuthUser.id, isAdmin: nextAuthUser.isAdmin, oauthProvider: nextAuthUser.oauthProvider, oauthId: nextAuthUser.oauthId });
     return {
       userId: nextAuthUser.id,
       isAdmin: nextAuthUser.isAdmin || false,
+      isOAuth: !!nextAuthUser.oauthProvider,
+      oauthProvider: nextAuthUser.oauthProvider,
+      oauthId: nextAuthUser.oauthId,
     };
   }
 
