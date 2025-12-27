@@ -191,6 +191,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('POST /api/matches: Creating match with dates', {
+      date_start,
+      date_end,
+      location,
+      now: new Date().toISOString(),
+    });
+    
     const newMatch = await db.matches.create({
       name,
       description: description || null,
@@ -209,6 +216,12 @@ export async function POST(request: NextRequest) {
       registration_end: registration_end || null,
       entry_fee: entry_fee || null,
       is_free: is_free ? 1 : 0,
+    });
+    
+    console.log('POST /api/matches: Match created', {
+      matchId: newMatch.id,
+      date_start: newMatch.date_start,
+      date_end: newMatch.date_end,
     });
 
     const paymentMethods = typeof newMatch.payment_methods === 'string' 

@@ -18,9 +18,13 @@ export async function updateMatchStatuses() {
     // - Tworzymy Date jako "18:00 UTC" i odejmujemy 1 godzinę (offset Polski UTC+1) = "17:00 UTC"
     // - W bazie mamy "2025-01-01T17:00:00.000Z" (UTC), co reprezentuje "18:00 czasu polskiego"
     //
-    // Aby sprawdzić czy mecz się zakończył, porównujemy aktualny czas UTC z endDateUTC
-    // Jeśli endDateUTC reprezentuje "18:00 czasu polskiego" = "17:00 UTC",
-    // to mecz kończy się o "17:00 UTC", więc porównanie now (UTC) > endDateUTC (UTC) jest poprawne
+    // Aby sprawdzić czy mecz się zakończył, musimy dodać offset z powrotem, aby uzyskać prawdziwy czas zakończenia
+    // endDateUTC = "17:00 UTC" reprezentuje "18:00 czasu polskiego"
+    // Prawdziwy czas zakończenia w UTC = "17:00 UTC" (bo to już jest skonwertowane)
+    // Porównujemy: now (UTC) > endDateUTC (UTC) - to jest poprawne!
+    // 
+    // Uwaga: Moja poprzednia logika była błędna - nie musimy dodawać offsetu z powrotem,
+    // bo endDateUTC już reprezentuje właściwy czas UTC dla czasu lokalnego miejsca meczu
     
     // Najprostsze rozwiązanie: Dla uproszczenia zakładamy Polskę (UTC+1)
     // Dodajemy 1 godzinę do endDateUTC, aby uzyskać czas zakończenia w lokalnym czasie miejsca meczu (w UTC)
@@ -36,7 +40,18 @@ export async function updateMatchStatuses() {
     
     // Dla teraz: używamy prostego porównania (zakładając że daty są poprawnie zapisane w UTC)
     // TODO: W przyszłości możemy dodać pole timezone do meczu lub określić strefę czasową z adresu
-    if (isAfter(now, endDateUTC)) {
+    
+    const isFinished = isAfter(now, endDateUTC);
+    console.log('updateMatchStatuses: Checking match', {
+      matchId: match.id,
+      matchName: match.name,
+      date_end: match.date_end,
+      endDateUTC: endDateUTC.toISOString(),
+      now: now.toISOString(),
+      isFinished,
+    });
+    
+    if (isFinished) {
       console.log('updateMatchStatuses: Match finished, updating status', { 
         matchId: match.id, 
         matchName: match.name,
