@@ -12,10 +12,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('Registration attempt:', {
-      userId: authUser.userId,
-      isAdmin: authUser.isAdmin,
-    });
 
     // Sprawdź czy użytkownik może zapisywać się na mecze
     const user = await db.users.get(authUser.userId);

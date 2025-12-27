@@ -256,6 +256,14 @@ const db = {
       return registrations.find((r: any) => r.id === id);
     },
     findByMatch: async (matchId: number) => {
+      // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane
+      const cacheKey = 'registrations' as const;
+      delete cache[cacheKey];
+      delete cache.urls?.[cacheKey];
+      // Ustaw bardzo stary timestamp, aby wymusić pobranie nowych danych
+      if (!cache.timestamp) cache.timestamp = 0;
+      cache.timestamp = Date.now() - CACHE_TTL - 1000;
+      
       const registrations = await readCollection(REGISTRATIONS_KEY, []);
       return registrations.filter((r: any) => r.match_id === matchId);
     },
@@ -264,52 +272,47 @@ const db = {
       return registrations.filter((r: any) => r.user_id === userId);
     },
     findByMatchAndUser: async (matchId: number, userId: number) => {
-      // Wyczyść cache, aby upewnić się, że mamy najnowsze dane
+      // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane
       const cacheKey = 'registrations' as const;
       delete cache[cacheKey];
       delete cache.urls?.[cacheKey];
+      // Ustaw bardzo stary timestamp, aby wymusić pobranie nowych danych
+      if (!cache.timestamp) cache.timestamp = 0;
+      cache.timestamp = Date.now() - CACHE_TTL - 1000;
       
       const registrations = await readCollection(REGISTRATIONS_KEY, []);
-      const result = registrations.find((r: any) => r.match_id === matchId && r.user_id === userId);
-      
-      console.log('findByMatchAndUser:', {
-        matchId,
-        userId,
-        totalRegistrations: registrations.length,
-        found: !!result,
-        matchingRegistrations: registrations.filter((r: any) => r.match_id === matchId && r.user_id === userId),
-      });
-      
-      return result;
+      return registrations.find((r: any) => r.match_id === matchId && r.user_id === userId);
     },
     create: async (registration: any) => {
-      // Wyczyść cache, aby upewnić się, że mamy najnowsze dane przed sprawdzeniem duplikatów
+      // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane przed sprawdzeniem duplikatów
       const cacheKey = 'registrations' as const;
       delete cache[cacheKey];
       delete cache.urls?.[cacheKey];
+      // Ustaw bardzo stary timestamp, aby wymusić pobranie nowych danych
+      if (!cache.timestamp) cache.timestamp = 0;
+      cache.timestamp = Date.now() - CACHE_TTL - 1000;
       
+      // Pobierz najnowsze dane bez cache
       const registrations = await readCollection(REGISTRATIONS_KEY, []);
-      // Sprawdź czy już istnieje
+      
+      // Sprawdź czy już istnieje - użyj dokładnego dopasowania
       const exists = registrations.some(
         (r: any) => r.match_id === registration.match_id && r.user_id === registration.user_id
       );
       if (exists) {
-        console.log('Registration create: Duplicate detected', {
-          match_id: registration.match_id,
-          user_id: registration.user_id,
-          existingRegistrations: registrations.filter((r: any) => r.match_id === registration.match_id && r.user_id === registration.user_id),
-        });
         return null;
       }
+      
+      // Utwórz nową rejestrację
       const newId = registrations.length > 0 ? Math.max(...registrations.map((r: any) => r.id)) + 1 : 1;
       const newRegistration = { ...registration, id: newId, created_at: new Date().toISOString() };
-      registrations.push(newRegistration);
-      await writeCollection(REGISTRATIONS_KEY, registrations);
-      console.log('Registration create: Success', {
-        id: newRegistration.id,
-        match_id: registration.match_id,
-        user_id: registration.user_id,
-      });
+      
+      // Dodaj nową rejestrację do listy (używamy spread operator, aby utworzyć nową tablicę)
+      const updatedRegistrations = [...registrations, newRegistration];
+      
+      // Zapisz z wyczyszczonym cache
+      await writeCollection(REGISTRATIONS_KEY, updatedRegistrations);
+      
       return newRegistration;
     },
     delete: async (id: number) => {
@@ -319,6 +322,14 @@ const db = {
       return filtered.length < registrations.length;
     },
     countByMatch: async (matchId: number) => {
+      // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane
+      const cacheKey = 'registrations' as const;
+      delete cache[cacheKey];
+      delete cache.urls?.[cacheKey];
+      // Ustaw bardzo stary timestamp, aby wymusić pobranie nowych danych
+      if (!cache.timestamp) cache.timestamp = 0;
+      cache.timestamp = Date.now() - CACHE_TTL - 1000;
+      
       const registrations = await readCollection(REGISTRATIONS_KEY, []);
       return registrations.filter((r: any) => r.match_id === matchId).length;
     },
