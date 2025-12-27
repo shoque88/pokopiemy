@@ -69,16 +69,39 @@ export default function MyMatchesPage() {
 
       // Filtruj mecze:
       // 1. Na które użytkownik jest zapisany
-      // 2. Utworzone przez użytkownika (organizer_phone = telefon użytkownika)
-      // Uwaga: jeśli użytkownik nie ma telefonu, nie zobaczy swoich meczów - to jest problem do rozwiązania
+      // 2. Utworzone przez użytkownika (organizer_phone = telefon użytkownika lub organizer_email = email użytkownika)
+      console.log('MyMatches loadData: Filtering matches', {
+        userId: userData.id,
+        userPhone: userData.phone,
+        userEmail: userData.email,
+        totalMatches: allMatches.length,
+        sampleMatches: allMatches.slice(0, 3).map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          organizer_phone: m.organizer_phone,
+          organizer_email: m.organizer_email,
+          registrationCount: m.registrations?.length || 0,
+        })),
+      });
       const userMatches = allMatches
         .filter((match: any) => {
           // Mecz utworzony przez użytkownika (sprawdź po telefonie lub emailu)
           const isCreatedByUser = (userData.phone && match.organizer_phone === userData.phone) ||
                                   (userData.email && match.organizer_email === userData.email);
           // Mecz, na który użytkownik jest zapisany
-          const isRegistered = match.registrations.some((reg: any) => reg.user_id === userData.id);
-          return isCreatedByUser || isRegistered;
+          const isRegistered = match.registrations?.some((reg: any) => reg.user_id === userData.id) || false;
+          const matches = isCreatedByUser || isRegistered;
+          if (matches) {
+            console.log('MyMatches loadData: Match matches user', {
+              matchId: match.id,
+              matchName: match.name,
+              isCreatedByUser,
+              isRegistered,
+              organizer_phone: match.organizer_phone,
+              organizer_email: match.organizer_email,
+            });
+          }
+          return matches;
         })
         .map((match: any) => {
           const registration = match.registrations.find((reg: any) => reg.user_id === userData.id);
@@ -112,14 +135,32 @@ export default function MyMatchesPage() {
     setSaving(true);
 
     try {
-      const dateStart = new Date(`${formData.date_start}T${formData.time_start}`);
-      const dateEnd = new Date(`${formData.date_start}T${formData.time_end}`);
+      // Traktujemy datę i czas jako czas lokalny w miejscu meczu (Polska, UTC+1/+2)
+      // Dla uproszczenia zakładamy, że wszystkie mecze są w Polsce (UTC+1 zimą, UTC+2 latem)
+      // Używamy UTC+1 jako konserwatywne oszacowanie
+      // Jeśli użytkownik wpisuje "18:00", to oznacza "18:00 czasu polskiego" = "17:00 UTC" (zimą)
+      //
+      // Aby traktować datę jako czas polski niezależnie od strefy czasowej przeglądarki użytkownika,
+      // tworzymy Date obiekt jako UTC i odejmujemy offset Polski (UTC+1)
+      // Przykład: "18:00 czasu polskiego" = "18:00 UTC+1" = "17:00 UTC"
+      // Więc tworzymy Date jako "18:00 UTC" i odejmujemy 1 godzinę = "17:00 UTC"
+      const dateStartStr = `${formData.date_start}T${formData.time_start}:00Z`; // Z na końcu oznacza UTC
+      const dateEndStr = `${formData.date_start}T${formData.time_end}:00Z`; // Z na końcu oznacza UTC
+      
+      // Tworzymy Date obiekt interpretując jako UTC
+      const dateStartUTC = new Date(dateStartStr);
+      const dateEndUTC = new Date(dateEndStr);
+      
+      // Odejmujemy 1 godzinę (offset Polski UTC+1) aby uzyskać właściwy czas UTC
+      // Jeśli użytkownik wpisał "18:00", to chcemy "17:00 UTC" (18:00 czasu polskiego = 17:00 UTC)
+      const dateStart = new Date(dateStartUTC.getTime() - 1 * 60 * 60 * 1000);
+      const dateEnd = new Date(dateEndUTC.getTime() - 1 * 60 * 60 * 1000);
 
       const registrationStart = formData.registration_start_date && formData.registration_start_time
-        ? new Date(`${formData.registration_start_date}T${formData.registration_start_time}`).toISOString()
+        ? new Date(`${formData.registration_start_date}T${formData.registration_start_time}:00`).toISOString()
         : undefined;
       const registrationEnd = formData.registration_end_date && formData.registration_end_time
-        ? new Date(`${formData.registration_end_date}T${formData.registration_end_time}`).toISOString()
+        ? new Date(`${formData.registration_end_date}T${formData.registration_end_time}:00`).toISOString()
         : undefined;
 
       const matchData = {

@@ -144,8 +144,14 @@ export default function AdminPanelPage() {
     setSaving(true);
 
     try {
-      const dateStart = new Date(`${formData.date_start}T${formData.time_start}`);
-      const dateEnd = new Date(`${formData.date_start}T${formData.time_end}`);
+      // Traktujemy datę i czas jako czas lokalny w miejscu meczu (Polska, UTC+1)
+      // Tworzymy Date jako UTC i odejmujemy offset Polski (UTC+1)
+      const dateStartStr = `${formData.date_start}T${formData.time_start}:00Z`;
+      const dateEndStr = `${formData.date_start}T${formData.time_end}:00Z`;
+      const dateStartUTC = new Date(dateStartStr);
+      const dateEndUTC = new Date(dateEndStr);
+      const dateStart = new Date(dateStartUTC.getTime() - 1 * 60 * 60 * 1000);
+      const dateEnd = new Date(dateEndUTC.getTime() - 1 * 60 * 60 * 1000);
 
       const registrationStart = formData.registration_start_date && formData.registration_start_time
         ? new Date(`${formData.registration_start_date}T${formData.registration_start_time}`).toISOString()

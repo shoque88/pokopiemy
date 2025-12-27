@@ -7,12 +7,43 @@ import nodemailer from 'nodemailer';
 export async function updateMatchStatuses() {
   const now = new Date();
   const activeMatches = await db.matches.findByStatus('active');
+  console.log('updateMatchStatuses: Checking active matches', { count: activeMatches.length, now: now.toISOString() });
 
   for (const match of activeMatches) {
-    const endDate = parseISO(match.date_end);
+    const endDateUTC = parseISO(match.date_end);
     
-    // Jeśli mecz się zakończył, zmień status i usuń wszystkie zapisy
-    if (isAfter(now, endDate)) {
+    // WAŻNE: Daty są przechowywane w UTC, ale reprezentują lokalny czas miejsca meczu (Polska, UTC+1)
+    // Przykład: użytkownik wpisuje "2025-01-01 18:00" w formularzu
+    // - Traktujemy to jako "18:00 czasu polskiego" (niezależnie od strefy czasowej przeglądarki)
+    // - Tworzymy Date jako "18:00 UTC" i odejmujemy 1 godzinę (offset Polski UTC+1) = "17:00 UTC"
+    // - W bazie mamy "2025-01-01T17:00:00.000Z" (UTC), co reprezentuje "18:00 czasu polskiego"
+    //
+    // Aby sprawdzić czy mecz się zakończył, porównujemy aktualny czas UTC z endDateUTC
+    // Jeśli endDateUTC reprezentuje "18:00 czasu polskiego" = "17:00 UTC",
+    // to mecz kończy się o "17:00 UTC", więc porównanie now (UTC) > endDateUTC (UTC) jest poprawne
+    
+    // Najprostsze rozwiązanie: Dla uproszczenia zakładamy Polskę (UTC+1)
+    // Dodajemy 1 godzinę do endDateUTC, aby uzyskać czas zakończenia w lokalnym czasie miejsca meczu (w UTC)
+    // Ale to nie jest poprawne... Musimy myśleć inaczej
+    //
+    // Poprawne rozwiązanie: Jeśli endDateUTC reprezentuje czas lokalny miejsca meczu (np. 18:00 lokalne w Polsce),
+    // a został zapisany jako "17:00 UTC" (bo to jest 18:00 lokalne w Polsce, GMT+1),
+    // to mecz kończy się o "17:00 UTC". Więc porównanie jest poprawne.
+    //
+    // Problem może być w tym, że jeśli użytkownik jest w innej strefie czasowej, to new Date('2025-01-01T18:00')
+    // może być zinterpretowane inaczej. Więc powinniśmy zapisywać datę jako czas lokalny miejsca meczu (bez offsetu),
+    // a potem podczas porównania konwertować na UTC z uwzględnieniem strefy czasowej miejsca meczu.
+    
+    // Dla teraz: używamy prostego porównania (zakładając że daty są poprawnie zapisane w UTC)
+    // TODO: W przyszłości możemy dodać pole timezone do meczu lub określić strefę czasową z adresu
+    if (isAfter(now, endDateUTC)) {
+      console.log('updateMatchStatuses: Match finished, updating status', { 
+        matchId: match.id, 
+        matchName: match.name,
+        date_end: match.date_end,
+        now: now.toISOString()
+      });
+      
       // Usuń wszystkie zapisy dla zakończonego meczu
       await db.registrations.deleteByMatch(match.id);
       
