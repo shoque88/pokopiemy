@@ -14,11 +14,15 @@ export async function GET(
   try {
     await updateMatchStatuses();
 
-    const match = await db.matches.get(parseInt(params.id));
+    const matchId = parseInt(params.id);
+    console.log('GET /api/matches/[id]: Looking for match', { matchId });
+    const match = await db.matches.get(matchId);
     
     if (!match) {
+      console.error('GET /api/matches/[id]: Match not found', { matchId });
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
     }
+    console.log('GET /api/matches/[id]: Match found', { matchId: match.id, name: match.name });
 
     const registrations = await db.registrations.findByMatch(match.id);
     console.log('GET /api/matches/[id]: Found registrations', { 

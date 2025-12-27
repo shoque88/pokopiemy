@@ -42,10 +42,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Sprawdź czy mecz istnieje i jest aktywny
+    console.log('Registration POST: Checking if match exists', { match_id });
     const match = await db.matches.get(match_id);
     if (!match) {
+      console.error('Registration POST: Match not found', { match_id });
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
     }
+    console.log('Registration POST: Match found', { match_id: match.id, name: match.name, status: match.status });
 
     if (match.status !== 'active') {
       return NextResponse.json(
