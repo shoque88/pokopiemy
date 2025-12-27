@@ -22,8 +22,10 @@ export async function POST(
     }
 
     // Pobierz dane użytkownika
+    // authUser.userId jest już zweryfikowane w getAuthUserOrNextAuth
     const user = await db.users.get(authUser.userId);
     if (!user) {
+      console.error('POST /api/matches/[id]/cancel: User not found (should not happen)', { userId: authUser.userId });
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 

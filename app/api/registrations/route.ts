@@ -14,12 +14,13 @@ export async function POST(request: NextRequest) {
 
 
     // Sprawdź czy użytkownik może zapisywać się na mecze
-    console.log('Registration POST: Looking for user with userId:', authUser.userId);
+    // authUser.userId jest już zweryfikowane w getAuthUserOrNextAuth, więc możemy użyć go bezpośrednio
     const user = await db.users.get(authUser.userId);
     if (!user) {
-      console.error('Registration POST: User not found in database', {
+      console.error('Registration POST: User not found in database (should not happen)', {
         userId: authUser.userId,
         isAdmin: authUser.isAdmin,
+        isOAuth: authUser.isOAuth,
       });
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -58,11 +59,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Sprawdź czy użytkownik już jest zapisany
-    const existing = await db.registrations.findByMatchAndUser(match_id, authUser.userId);
+    const existing = await db.registrations.findByMatchAndUser(match_id, user.id);
     if (existing) {
       console.log('Registration already exists:', {
         match_id,
-        userId: authUser.userId,
+        userId: user.id,
         existingRegistration: existing,
       });
       return NextResponse.json(
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
     // Zapisz użytkownika
     const registration = await db.registrations.create({
       match_id,
-      user_id: authUser.userId,
+      user_id: user.id,
     });
 
     if (!registration) {
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       registration: {
         id: registration.id,
         match_id,
-        user_id: authUser.userId,
+        user_id: user.id,
       },
     });
   } catch (error) {
