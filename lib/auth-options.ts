@@ -120,11 +120,18 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             (token as any).oauthProvider = account.provider;
             (token as any).oauthId = account.providerAccountId;
+            console.log('JWT callback: Found user by OAuth ID', {
+              provider: account.provider,
+              oauthId: account.providerAccountId,
+              userId: dbUser.id,
+              email: dbUser.email,
+            });
           }
         }
         
-        // Jeśli nie znaleziono po OAuth, spróbuj po email
-        if (!dbUser && user.email) {
+        // Jeśli nie znaleziono po OAuth, spróbuj po email (tylko jeśli nie jest to OAuth provider)
+        // Uwaga: dla OAuth, użytkownik powinien być już utworzony w signIn callback
+        if (!dbUser && user.email && account.provider !== 'google' && account.provider !== 'facebook') {
           dbUser = await db.users.findByEmail(user.email);
         }
 
@@ -151,9 +158,14 @@ export const authOptions: NextAuthOptions = {
           token.userId = dbUser.id;
           token.isAdmin = dbUser.is_admin === 1;
           token.email = dbUser.email;
+        } else {
+          console.error('JWT refresh: User not found by OAuth ID', {
+            provider: (token as any).oauthProvider,
+            oauthId: (token as any).oauthId,
+          });
         }
-      } else if (token && token.email) {
-        // W kolejnych wywołaniach, jeśli mamy email w tokenie, użyj go (fallback)
+      } else if (token && token.email && !(token as any).oauthProvider) {
+        // W kolejnych wywołaniach, jeśli mamy email w tokenie i NIE jest to OAuth, użyj go (fallback tylko dla nie-OAuth)
         const dbUser = await db.users.findByEmail(token.email as string);
         if (dbUser) {
           token.userId = dbUser.id;

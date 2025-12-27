@@ -12,6 +12,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    console.log('Registration attempt:', {
+      userId: authUser.userId,
+      isAdmin: authUser.isAdmin,
+    });
+
     // Sprawdź czy użytkownik może zapisywać się na mecze
     const user = await db.users.get(authUser.userId);
     if (!user) {
@@ -50,8 +55,13 @@ export async function POST(request: NextRequest) {
     // Sprawdź czy użytkownik już jest zapisany
     const existing = await db.registrations.findByMatchAndUser(match_id, authUser.userId);
     if (existing) {
+      console.log('Registration already exists:', {
+        match_id,
+        userId: authUser.userId,
+        existingRegistration: existing,
+      });
       return NextResponse.json(
-        { error: 'Already registered for this match' },
+        { error: 'Już jesteś zapisany na ten mecz' },
         { status: 400 }
       );
     }
