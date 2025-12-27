@@ -32,12 +32,14 @@ export async function getAuthUserOrNextAuth(request: NextRequest) {
   // Jeśli nie ma JWT, sprawdź NextAuth session (dla OAuth użytkowników)
   const nextAuthUser = await getCurrentUser();
   if (nextAuthUser) {
+    console.log('getAuthUserOrNextAuth: NextAuth user found', { userId: nextAuthUser.id, isAdmin: nextAuthUser.isAdmin });
     return {
       userId: nextAuthUser.id,
       isAdmin: nextAuthUser.isAdmin || false,
     };
   }
 
+  console.log('getAuthUserOrNextAuth: No user found (no JWT, no NextAuth session)');
   return null;
 }
 

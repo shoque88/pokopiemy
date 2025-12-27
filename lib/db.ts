@@ -232,7 +232,9 @@ const db = {
     all: async () => await readCollection(MATCHES_KEY, []),
     get: async (id: number) => {
       const matches = await readCollection(MATCHES_KEY, []);
-      return matches.find((m: any) => m.id === id);
+      const match = matches.find((m: any) => m.id === id);
+      console.log('matches.get:', { id, found: !!match, totalMatches: matches.length, matchIds: matches.map((m: any) => m.id) });
+      return match;
     },
     create: async (match: any) => {
       const matches = await readCollection(MATCHES_KEY, []);
