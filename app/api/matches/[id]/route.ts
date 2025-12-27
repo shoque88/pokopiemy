@@ -21,7 +21,11 @@ export async function GET(
     }
 
     const registrations = await db.registrations.findByMatch(match.id);
-    console.log('GET /api/matches/[id]: Found registrations', { matchId: match.id, registrationCount: registrations.length });
+    console.log('GET /api/matches/[id]: Found registrations', { 
+      matchId: match.id, 
+      registrationCount: registrations.length,
+      registrations: registrations.map((r: any) => ({ id: r.id, match_id: r.match_id, user_id: r.user_id }))
+    });
     const users = await db.users.all();
 
     const registrationsWithUsers = registrations.map((reg: any) => {
@@ -40,6 +44,12 @@ export async function GET(
         } : null,
       };
     }).filter((reg: any) => reg.user !== null);
+
+    console.log('GET /api/matches/[id]: Registrations with users', { 
+      matchId: match.id,
+      count: registrationsWithUsers.length,
+      registrationsWithUsers: registrationsWithUsers.map((r: any) => ({ id: r.id, user_id: r.user_id, userName: r.user?.name }))
+    });
 
     const paymentMethods = typeof match.payment_methods === 'string' 
       ? JSON.parse(match.payment_methods || '[]')
