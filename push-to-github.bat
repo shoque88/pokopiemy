@@ -13,3 +13,4 @@ echo Gotowe! Zmiany zostaly wyslane do GitHub.
 echo Vercel automatycznie wdrozy aktualizacje.
 pause
 
+
