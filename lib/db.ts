@@ -112,6 +112,15 @@ async function readCollection(key: string, defaultValue: any[], skipCache: boole
 async function writeCollection(key: string, data: any[]): Promise<void> {
   try {
     const jsonString = JSON.stringify(data, null, 2);
+    const cacheKey = key.replace('.json', '') as 'users' | 'matches' | 'registrations';
+    
+    console.log(`writeCollection: Saving ${key}`, {
+      key,
+      itemCount: data.length,
+      cacheKey,
+      sampleIds: cacheKey === 'matches' ? data.map((m: any) => m.id).slice(0, 5) : undefined,
+      sampleIdsUsers: cacheKey === 'users' ? data.map((u: any) => u.id).slice(0, 5) : undefined,
+    });
     
     // Zapisz do Vercel Blob
     const blob = await put(key, jsonString, {
@@ -120,13 +129,23 @@ async function writeCollection(key: string, data: any[]): Promise<void> {
       addRandomSuffix: false, // Używamy stałych nazw plików
     });
 
+    console.log(`writeCollection: Saved ${key} to Blob`, {
+      key,
+      blobUrl: blob.url,
+      itemCount: data.length,
+    });
+
     // Zaktualizuj cache (dla rejestracji nie zapisujemy w cache, aby zawsze mieć najnowsze dane)
-    const cacheKey = key.replace('.json', '') as 'users' | 'matches' | 'registrations';
     if (cacheKey !== 'registrations') {
       cache[cacheKey] = data;
       cache.timestamp = Date.now();
       if (!cache.urls) cache.urls = {};
       cache.urls[cacheKey] = blob.url;
+      console.log(`writeCollection: Updated ${cacheKey} cache`, {
+        cacheKey,
+        itemCount: data.length,
+        cacheTimestamp: cache.timestamp,
+      });
     } else {
       // Dla rejestracji zawsze wyczyść cache, aby wymusić ponowne odczytanie
       delete cache.registrations;
@@ -286,12 +305,31 @@ const db = {
         totalMatches: matches.length, 
         maxMatchId,
         maxRegistrationMatchId,
-        existingMatchIds: matches.map((m: any) => m.id) 
+        existingMatchIds: matches.map((m: any) => m.id),
+        matchName: match.name,
       });
       
       const newMatch = { ...match, id: newId, created_at: new Date().toISOString() };
       matches.push(newMatch);
+      
+      console.log('Match create: Before writeCollection', {
+        newId,
+        totalMatchesBeforeWrite: matches.length,
+        matchIdsBeforeWrite: matches.map((m: any) => m.id),
+      });
+      
       await writeCollection(MATCHES_KEY, matches);
+      
+      // Weryfikuj, czy mecz został poprawnie zapisany
+      const verifyMatches = await readCollection(MATCHES_KEY, []);
+      const verifyMatch = verifyMatches.find((m: any) => m.id === newId);
+      console.log('Match create: After writeCollection verification', {
+        newId,
+        totalMatchesAfterWrite: verifyMatches.length,
+        matchIdsAfterWrite: verifyMatches.map((m: any) => m.id),
+        matchFound: !!verifyMatch,
+        matchName: verifyMatch?.name,
+      });
       
       return newMatch;
     },

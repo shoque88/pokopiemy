@@ -190,10 +190,22 @@ export default function MyMatchesPage() {
         recurrence_frequency: formData.is_recurring ? formData.recurrence_frequency : null,
       };
 
+      console.log('MyMatches handleSubmit: Sending match creation request', {
+        matchData: { ...matchData, payment_methods: matchData.payment_methods.length },
+      });
+      
       const res = await fetch('/api/matches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(matchData),
+      });
+
+      const responseData = await res.json();
+      console.log('MyMatches handleSubmit: Match creation response', {
+        ok: res.ok,
+        status: res.status,
+        matchId: responseData.id,
+        matchName: responseData.name,
       });
 
       if (res.ok) {
