@@ -14,10 +14,16 @@ export async function POST(request: NextRequest) {
 
 
     // Sprawdź czy użytkownik może zapisywać się na mecze
+    console.log('Registration POST: Looking for user with userId:', authUser.userId);
     const user = await db.users.get(authUser.userId);
     if (!user) {
+      console.error('Registration POST: User not found in database', {
+        userId: authUser.userId,
+        isAdmin: authUser.isAdmin,
+      });
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+    console.log('Registration POST: User found', { userId: user.id, email: user.email, name: user.name });
 
     if (user.can_register_to_matches !== undefined && user.can_register_to_matches !== 1) {
       return NextResponse.json(
