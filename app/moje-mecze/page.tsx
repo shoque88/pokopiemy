@@ -36,7 +36,7 @@ export default function MyMatchesPage() {
     location: '',
     max_players: '',
     payment_methods: [] as string[],
-    level: 'kopanina' as 'kopanina' | 'cośtam gramy' | 'wannabe pro',
+    level: 'kopanina' as 'kopanina' | 'cośtam gramy' | 'semi pro',
     registration_start_date: '',
     registration_start_time: '',
     registration_end_date: '',
@@ -465,12 +465,12 @@ export default function MyMatchesPage() {
               <label>Poziom *</label>
               <select
                 value={formData.level}
-                onChange={(e) => setFormData({ ...formData, level: e.target.value as 'kopanina' | 'cośtam gramy' | 'wannabe pro' })}
+                onChange={(e) => setFormData({ ...formData, level: e.target.value as 'kopanina' | 'cośtam gramy' | 'semi pro' })}
                 required
               >
                 <option value="kopanina">Kopanina</option>
                 <option value="cośtam gramy">Cośtam gramy</option>
-                <option value="wannabe pro">Wannabe pro</option>
+                <option value="semi pro">Semi pro</option>
               </select>
             </div>
 
@@ -515,7 +515,7 @@ export default function MyMatchesPage() {
                   <span>📅 {formatDateTime(match.date_start)} - {formatTime(match.date_end)}</span>
                   <span>📍 {match.location}</span>
                   {match.level && (
-                    <span>🎯 {match.level === 'kopanina' ? 'Kopanina' : match.level === 'cośtam gramy' ? 'Cośtam gramy' : match.level === 'wannabe pro' ? 'Wannabe pro' : match.level}</span>
+                    <span>🎯 {match.level === 'kopanina' ? 'Kopanina' : match.level === 'cośtam gramy' ? 'Cośtam gramy' : match.level === 'semi pro' ? 'Semi pro' : match.level}</span>
                   )}
                 </div>
 
@@ -568,7 +568,7 @@ export default function MyMatchesPage() {
                   <span>📅 {formatDateTime(match.date_start)} - {formatTime(match.date_end)}</span>
                   <span>📍 {match.location}</span>
                   {match.level && (
-                    <span>🎯 {match.level === 'kopanina' ? 'Kopanina' : match.level === 'cośtam gramy' ? 'Cośtam gramy' : match.level === 'wannabe pro' ? 'Wannabe pro' : match.level}</span>
+                    <span>🎯 {match.level === 'kopanina' ? 'Kopanina' : match.level === 'cośtam gramy' ? 'Cośtam gramy' : match.level === 'semi pro' ? 'Semi pro' : match.level}</span>
                   )}
                 </div>
                 <div className="match-footer">

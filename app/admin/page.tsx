@@ -39,7 +39,7 @@ export default function AdminPanelPage() {
     max_players: '',
     organizer_phone: '',
     payment_methods: [] as string[],
-    level: 'kopanina' as 'kopanina' | 'cośtam gramy' | 'wannabe pro',
+    level: 'kopanina' as 'kopanina' | 'cośtam gramy' | 'semi pro',
     status: 'active',
     is_recurring: false,
     recurrence_frequency: '',
@@ -494,12 +494,12 @@ export default function AdminPanelPage() {
               <label>Poziom *</label>
               <select
                 value={formData.level}
-                onChange={(e) => setFormData({ ...formData, level: e.target.value as 'kopanina' | 'cośtam gramy' | 'wannabe pro' })}
+                onChange={(e) => setFormData({ ...formData, level: e.target.value as 'kopanina' | 'cośtam gramy' | 'semi pro' })}
                 required
               >
                 <option value="kopanina">Kopanina</option>
                 <option value="cośtam gramy">Cośtam gramy</option>
-                <option value="wannabe pro">Wannabe pro</option>
+                <option value="semi pro">Semi pro</option>
               </select>
             </div>
 

@@ -230,7 +230,7 @@ function LoginForm() {
                   <option value="">Wybierz poziom</option>
                   <option value="kopanina">Kopanina</option>
                   <option value="cośtam gramy">Cośtam gramy</option>
-                  <option value="wannabe pro">Wannabe pro</option>
+                  <option value="semi pro">Semi pro</option>
                 </select>
               </div>
             </>

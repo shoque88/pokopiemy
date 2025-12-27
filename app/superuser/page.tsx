@@ -290,7 +290,7 @@ export default function SuperuserPanelPage() {
                         <span>📅 {formatDateTime(match.date_start)} - {format(parseISO(match.date_end), 'HH:mm')}</span>
                         <span>📍 {match.location}</span>
                         <span>👥 {match.registered_count}/{match.max_players} graczy</span>
-                        <span>🎯 {match.level === 'kopanina' ? 'Kopanina' : match.level === 'cośtam gramy' ? 'Cośtam gramy' : match.level === 'wannabe pro' ? 'Wannabe pro' : match.level}</span>
+                        <span>🎯 {match.level === 'kopanina' ? 'Kopanina' : match.level === 'cośtam gramy' ? 'Cośtam gramy' : match.level === 'semi pro' ? 'Semi pro' : match.level}</span>
                         <span className={`status-badge ${match.status === 'active' ? 'status-active' : match.status === 'finished' ? 'status-finished' : 'status-canceled'}`}>
                           {match.status === 'active' ? 'Aktywny' : match.status === 'finished' ? 'Zakończony' : 'Odwołany'}
                         </span>

@@ -230,7 +230,7 @@ export default function MatchDetailsPage() {
           <span className="info-value">
             {match.level === 'kopanina' ? 'Kopanina' :
              match.level === 'cośtam gramy' ? 'Cośtam gramy' :
-             match.level === 'wannabe pro' ? 'Wannabe pro' :
+             match.level === 'semi pro' ? 'Semi pro' :
              match.level}
           </span>
         </div>

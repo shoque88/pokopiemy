@@ -4,7 +4,7 @@ export type MatchStatus = 'active' | 'finished' | 'canceled';
 
 export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly';
 
-export type PreferredLevel = 'kopanina' | 'cośtam gramy' | 'wannabe pro';
+export type PreferredLevel = 'kopanina' | 'cośtam gramy' | 'semi pro';
 
 export interface User {
   id: number;
