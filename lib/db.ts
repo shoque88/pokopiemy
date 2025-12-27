@@ -264,22 +264,52 @@ const db = {
       return registrations.filter((r: any) => r.user_id === userId);
     },
     findByMatchAndUser: async (matchId: number, userId: number) => {
+      // Wyczyść cache, aby upewnić się, że mamy najnowsze dane
+      const cacheKey = 'registrations' as const;
+      delete cache[cacheKey];
+      delete cache.urls?.[cacheKey];
+      
       const registrations = await readCollection(REGISTRATIONS_KEY, []);
-      return registrations.find((r: any) => r.match_id === matchId && r.user_id === userId);
+      const result = registrations.find((r: any) => r.match_id === matchId && r.user_id === userId);
+      
+      console.log('findByMatchAndUser:', {
+        matchId,
+        userId,
+        totalRegistrations: registrations.length,
+        found: !!result,
+        matchingRegistrations: registrations.filter((r: any) => r.match_id === matchId && r.user_id === userId),
+      });
+      
+      return result;
     },
     create: async (registration: any) => {
+      // Wyczyść cache, aby upewnić się, że mamy najnowsze dane przed sprawdzeniem duplikatów
+      const cacheKey = 'registrations' as const;
+      delete cache[cacheKey];
+      delete cache.urls?.[cacheKey];
+      
       const registrations = await readCollection(REGISTRATIONS_KEY, []);
       // Sprawdź czy już istnieje
       const exists = registrations.some(
         (r: any) => r.match_id === registration.match_id && r.user_id === registration.user_id
       );
       if (exists) {
+        console.log('Registration create: Duplicate detected', {
+          match_id: registration.match_id,
+          user_id: registration.user_id,
+          existingRegistrations: registrations.filter((r: any) => r.match_id === registration.match_id && r.user_id === registration.user_id),
+        });
         return null;
       }
       const newId = registrations.length > 0 ? Math.max(...registrations.map((r: any) => r.id)) + 1 : 1;
       const newRegistration = { ...registration, id: newId, created_at: new Date().toISOString() };
       registrations.push(newRegistration);
       await writeCollection(REGISTRATIONS_KEY, registrations);
+      console.log('Registration create: Success', {
+        id: newRegistration.id,
+        match_id: registration.match_id,
+        user_id: registration.user_id,
+      });
       return newRegistration;
     },
     delete: async (id: number) => {
