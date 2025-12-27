@@ -49,9 +49,18 @@ export default function MatchDetailsPage() {
 
   const loadMatch = async () => {
     try {
-      const res = await fetch(`/api/matches/${params.id}`);
+      // Użyj cache: 'no-store' aby zawsze pobrać najnowsze dane
+      const res = await fetch(`/api/matches/${params.id}`, {
+        cache: 'no-store',
+      });
       if (res.ok) {
         const data = await res.json();
+        console.log('loadMatch: Loaded match data', { 
+          matchId: data.id, 
+          registrationCount: data.registered_count,
+          registrations: data.registrations?.length || 0,
+          registrationDetails: data.registrations 
+        });
         setMatch(data);
       }
     } catch (error) {
@@ -93,7 +102,9 @@ export default function MatchDetailsPage() {
 
       if (res.ok) {
         setMessage({ type: 'success', text: 'Zostałeś zapisany na mecz!' });
-        loadMatch();
+        // Poczekaj chwilę, aby upewnić się, że dane są zapisane, a następnie odśwież
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await loadMatch();
       } else {
         setMessage({ type: 'error', text: data.error || 'Błąd podczas zapisywania' });
       }
