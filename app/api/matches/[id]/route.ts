@@ -21,6 +21,7 @@ export async function GET(
     }
 
     const registrations = await db.registrations.findByMatch(match.id);
+    console.log('GET /api/matches/[id]: Found registrations', { matchId: match.id, registrationCount: registrations.length });
     const users = await db.users.all();
 
     const registrationsWithUsers = registrations.map((reg: any) => {

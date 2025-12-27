@@ -236,10 +236,32 @@ const db = {
     },
     create: async (match: any) => {
       const matches = await readCollection(MATCHES_KEY, []);
-      const newId = matches.length > 0 ? Math.max(...matches.map((m: any) => m.id)) + 1 : 1;
+      
+      // Znajdź najwyższe ID wśród istniejących meczów
+      const maxMatchId = matches.length > 0 ? Math.max(...matches.map((m: any) => m.id)) : 0;
+      
+      // Znajdź najwyższe match_id wśród wszystkich rejestracji (nawet dla usuniętych meczów)
+      // To zapewnia, że nowe ID będzie unikalne w całej historii aplikacji
+      const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
+      const maxRegistrationMatchId = registrations.length > 0 
+        ? Math.max(...registrations.map((r: any) => r.match_id || 0)) 
+        : 0;
+      
+      // Użyj najwyższego ID z obu źródeł + 1
+      const newId = Math.max(maxMatchId, maxRegistrationMatchId) + 1;
+      
+      console.log('Match create: Creating new match', { 
+        newId, 
+        totalMatches: matches.length, 
+        maxMatchId,
+        maxRegistrationMatchId,
+        existingMatchIds: matches.map((m: any) => m.id) 
+      });
+      
       const newMatch = { ...match, id: newId, created_at: new Date().toISOString() };
       matches.push(newMatch);
       await writeCollection(MATCHES_KEY, matches);
+      
       return newMatch;
     },
     update: async (id: number, updates: any) => {
@@ -329,8 +351,11 @@ const db = {
       return count;
     },
     deleteByMatch: async (matchId: number) => {
-      const registrations = await readCollection(REGISTRATIONS_KEY, []);
+      // Wyłącz cache, aby mieć najnowsze dane przed usunięciem
+      const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
+      console.log('deleteByMatch: Before deletion', { matchId, totalRegistrations: registrations.length, matchingRegistrations: registrations.filter((r: any) => r.match_id === matchId).length });
       const filtered = registrations.filter((r: any) => r.match_id !== matchId);
+      console.log('deleteByMatch: After filtering', { matchId, filteredCount: filtered.length, deletedCount: registrations.length - filtered.length });
       await writeCollection(REGISTRATIONS_KEY, filtered);
       return filtered.length < registrations.length;
     },
