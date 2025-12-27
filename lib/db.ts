@@ -36,13 +36,19 @@ function getBlobStoreUrl(): string | null {
 }
 
 // Funkcje pomocnicze do odczytu/zapisu z Vercel Blob
-async function readCollection(key: string, defaultValue: any[]): Promise<any[]> {
+async function readCollection(key: string, defaultValue: any[], skipCache: boolean = false): Promise<any[]> {
   try {
-    // Sprawdź cache
+    // Sprawdź cache (tylko jeśli nie pomijamy cache)
     const cacheKey = key.replace('.json', '') as 'users' | 'matches' | 'registrations';
     const now = Date.now();
-    if (cache[cacheKey] && cache.timestamp && (now - cache.timestamp) < CACHE_TTL) {
+    if (!skipCache && cache[cacheKey] && cache.timestamp && (now - cache.timestamp) < CACHE_TTL) {
       return cache[cacheKey]!;
+    }
+    
+    // Jeśli pomijamy cache, wyczyść go
+    if (skipCache) {
+      delete cache[cacheKey];
+      delete cache.urls?.[cacheKey];
     }
 
     const baseUrl = getBlobStoreUrl();
@@ -64,9 +70,11 @@ async function readCollection(key: string, defaultValue: any[]): Promise<any[]> 
 
       if (!response.ok) {
         if (response.status === 404) {
-          // Blob nie istnieje jeszcze - zwróć wartość domyślną
-          cache[cacheKey] = defaultValue;
-          cache.timestamp = now;
+          // Blob nie istnieje jeszcze - zwróć wartość domyślną (tylko jeśli nie pomijamy cache)
+          if (!skipCache) {
+            cache[cacheKey] = defaultValue;
+            cache.timestamp = now;
+          }
           return defaultValue;
         }
         throw new Error(`Failed to fetch ${key}: ${response.statusText}`);
@@ -75,18 +83,22 @@ async function readCollection(key: string, defaultValue: any[]): Promise<any[]> 
       const data = await response.json();
       const result = Array.isArray(data) ? data : defaultValue;
       
-      // Zaktualizuj cache
-      cache[cacheKey] = result;
-      cache.timestamp = now;
-      if (!cache.urls) cache.urls = {};
-      cache.urls[cacheKey] = blobUrl;
+      // Zaktualizuj cache (tylko jeśli nie pomijamy cache - dla rejestracji zawsze pomijamy cache)
+      if (!skipCache) {
+        cache[cacheKey] = result;
+        cache.timestamp = now;
+        if (!cache.urls) cache.urls = {};
+        cache.urls[cacheKey] = blobUrl;
+      }
       
       return result;
     } catch (fetchError: any) {
-      // Jeśli fetch nie powiódł się (np. blob nie istnieje), zwróć wartość domyślną
+      // Jeśli fetch nie powiódł się (np. blob nie istnieje), zwróć wartość domyślną (tylko jeśli nie pomijamy cache)
       if (fetchError.message?.includes('404') || fetchError.status === 404) {
-        cache[cacheKey] = defaultValue;
-        cache.timestamp = now;
+        if (!skipCache) {
+          cache[cacheKey] = defaultValue;
+          cache.timestamp = now;
+        }
         return defaultValue;
       }
       throw fetchError;
@@ -108,12 +120,14 @@ async function writeCollection(key: string, data: any[]): Promise<void> {
       addRandomSuffix: false, // Używamy stałych nazw plików
     });
 
-    // Zaktualizuj cache
+    // Zaktualizuj cache (dla rejestracji nie zapisujemy w cache, aby zawsze mieć najnowsze dane)
     const cacheKey = key.replace('.json', '') as 'users' | 'matches' | 'registrations';
-    cache[cacheKey] = data;
-    cache.timestamp = Date.now();
-    if (!cache.urls) cache.urls = {};
-    cache.urls[cacheKey] = blob.url;
+    if (cacheKey !== 'registrations') {
+      cache[cacheKey] = data;
+      cache.timestamp = Date.now();
+      if (!cache.urls) cache.urls = {};
+      cache.urls[cacheKey] = blob.url;
+    }
   } catch (error) {
     console.error(`Error writing ${key} to Blob:`, error);
     // Wyczyść cache w przypadku błędu
@@ -257,15 +271,10 @@ const db = {
     },
     findByMatch: async (matchId: number) => {
       // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane
-      const cacheKey = 'registrations' as const;
-      delete cache[cacheKey];
-      delete cache.urls?.[cacheKey];
-      // Ustaw bardzo stary timestamp, aby wymusić pobranie nowych danych
-      if (!cache.timestamp) cache.timestamp = 0;
-      cache.timestamp = Date.now() - CACHE_TTL - 1000;
-      
-      const registrations = await readCollection(REGISTRATIONS_KEY, []);
-      return registrations.filter((r: any) => r.match_id === matchId);
+      const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
+      const result = registrations.filter((r: any) => r.match_id === matchId);
+      console.log('findByMatch:', { matchId, count: result.length, allRegistrations: registrations.length });
+      return result;
     },
     findByUser: async (userId: number) => {
       const registrations = await readCollection(REGISTRATIONS_KEY, []);
@@ -273,65 +282,51 @@ const db = {
     },
     findByMatchAndUser: async (matchId: number, userId: number) => {
       // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane
-      const cacheKey = 'registrations' as const;
-      delete cache[cacheKey];
-      delete cache.urls?.[cacheKey];
-      // Ustaw bardzo stary timestamp, aby wymusić pobranie nowych danych
-      if (!cache.timestamp) cache.timestamp = 0;
-      cache.timestamp = Date.now() - CACHE_TTL - 1000;
-      
-      const registrations = await readCollection(REGISTRATIONS_KEY, []);
-      return registrations.find((r: any) => r.match_id === matchId && r.user_id === userId);
+      const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
+      const result = registrations.find((r: any) => r.match_id === matchId && r.user_id === userId);
+      console.log('findByMatchAndUser:', { matchId, userId, found: !!result, allRegistrations: registrations.length });
+      return result;
     },
     create: async (registration: any) => {
       // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane przed sprawdzeniem duplikatów
-      const cacheKey = 'registrations' as const;
-      delete cache[cacheKey];
-      delete cache.urls?.[cacheKey];
-      // Ustaw bardzo stary timestamp, aby wymusić pobranie nowych danych
-      if (!cache.timestamp) cache.timestamp = 0;
-      cache.timestamp = Date.now() - CACHE_TTL - 1000;
-      
-      // Pobierz najnowsze dane bez cache
-      const registrations = await readCollection(REGISTRATIONS_KEY, []);
+      const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
+      console.log('Registration create: Current registrations count:', registrations.length);
       
       // Sprawdź czy już istnieje - użyj dokładnego dopasowania
       const exists = registrations.some(
         (r: any) => r.match_id === registration.match_id && r.user_id === registration.user_id
       );
       if (exists) {
+        console.log('Registration create: Duplicate detected', { match_id: registration.match_id, user_id: registration.user_id });
         return null;
       }
       
       // Utwórz nową rejestrację
       const newId = registrations.length > 0 ? Math.max(...registrations.map((r: any) => r.id)) + 1 : 1;
       const newRegistration = { ...registration, id: newId, created_at: new Date().toISOString() };
+      console.log('Registration create: Creating new registration', { id: newId, match_id: registration.match_id, user_id: registration.user_id });
       
       // Dodaj nową rejestrację do listy (używamy spread operator, aby utworzyć nową tablicę)
       const updatedRegistrations = [...registrations, newRegistration];
+      console.log('Registration create: Updated registrations count:', updatedRegistrations.length);
       
-      // Zapisz z wyczyszczonym cache
+      // Zapisz (dla rejestracji nie zapisujemy w cache w writeCollection)
       await writeCollection(REGISTRATIONS_KEY, updatedRegistrations);
       
       return newRegistration;
     },
     delete: async (id: number) => {
-      const registrations = await readCollection(REGISTRATIONS_KEY, []);
+      const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
       const filtered = registrations.filter((r: any) => r.id !== id);
       await writeCollection(REGISTRATIONS_KEY, filtered);
       return filtered.length < registrations.length;
     },
     countByMatch: async (matchId: number) => {
       // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane
-      const cacheKey = 'registrations' as const;
-      delete cache[cacheKey];
-      delete cache.urls?.[cacheKey];
-      // Ustaw bardzo stary timestamp, aby wymusić pobranie nowych danych
-      if (!cache.timestamp) cache.timestamp = 0;
-      cache.timestamp = Date.now() - CACHE_TTL - 1000;
-      
-      const registrations = await readCollection(REGISTRATIONS_KEY, []);
-      return registrations.filter((r: any) => r.match_id === matchId).length;
+      const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
+      const count = registrations.filter((r: any) => r.match_id === matchId).length;
+      console.log('countByMatch:', { matchId, count, allRegistrations: registrations.length });
+      return count;
     },
     deleteByMatch: async (matchId: number) => {
       const registrations = await readCollection(REGISTRATIONS_KEY, []);
