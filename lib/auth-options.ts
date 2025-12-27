@@ -22,6 +22,13 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      console.log('signIn callback: Starting', {
+        provider: account?.provider,
+        providerAccountId: account?.providerAccountId,
+        userEmail: user.email,
+        userName: user.name,
+      });
+      
       // Dla Facebook, jeśli nie ma email, pozwól na logowanie bez email
       const isFacebook = account?.provider === 'facebook';
       let userEmail = user.email;
