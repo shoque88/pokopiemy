@@ -127,6 +127,11 @@ async function writeCollection(key: string, data: any[]): Promise<void> {
       cache.timestamp = Date.now();
       if (!cache.urls) cache.urls = {};
       cache.urls[cacheKey] = blob.url;
+    } else {
+      // Dla rejestracji zawsze wyczyść cache, aby wymusić ponowne odczytanie
+      delete cache.registrations;
+      delete cache.timestamp;
+      console.log('writeCollection: Cleared registrations cache after write');
     }
   } catch (error) {
     console.error(`Error writing ${key} to Blob:`, error);

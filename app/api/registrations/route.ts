@@ -82,17 +82,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Zapisz użytkownika
+    console.log('Registration POST: Creating registration', { match_id, user_id: user.id, userName: user.name, userEmail: user.email });
     const registration = await db.registrations.create({
       match_id,
       user_id: user.id,
     });
 
     if (!registration) {
+      console.error('Registration POST: Failed to create registration', { match_id, user_id: user.id });
       return NextResponse.json(
         { error: 'Failed to create registration' },
         { status: 500 }
       );
     }
+
+    console.log('Registration POST: Registration created successfully', { 
+      registration_id: registration.id, 
+      match_id, 
+      user_id: user.id,
+      createdAt: registration.created_at 
+    });
 
     return NextResponse.json({
       success: true,

@@ -33,10 +33,15 @@ export async function GET(request: NextRequest) {
     }
 
     let matches = await db.matches.all();
+    console.log('GET /api/matches: All matches before filtering', { 
+      totalMatches: matches.length,
+      matches: matches.map((m: any) => ({ id: m.id, name: m.name, status: m.status, date_end: m.date_end }))
+    });
 
     // Filtrowanie
     if (status) {
       matches = matches.filter((m: any) => m.status === status);
+      console.log('GET /api/matches: After status filter', { status, count: matches.length });
     }
 
     if (location) {
