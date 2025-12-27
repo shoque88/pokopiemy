@@ -58,13 +58,20 @@ async function readCollection(key: string, defaultValue: any[], skipCache: boole
     }
 
     // Pobierz URL blob (używamy cache URL jeśli dostępny)
+    // WAŻNE: Dla rejestracji zawsze używamy świeżego URL (bez cache), aby uniknąć problemów z propagacją danych
     let blobUrl = cache.urls?.[cacheKey];
-    if (!blobUrl) {
+    if (!blobUrl || cacheKey === 'registrations') {
+      // Dla rejestracji zawsze generuj świeży URL, aby uniknąć problemów z cache
       blobUrl = `${baseUrl}/${key}`;
     }
 
     try {
-      const response = await fetch(blobUrl, {
+      // Dla rejestracji dodaj timestamp do URL, aby wymusić świeże pobranie
+      const fetchUrl = cacheKey === 'registrations' 
+        ? `${blobUrl}?t=${Date.now()}` 
+        : blobUrl;
+      
+      const response = await fetch(fetchUrl, {
         cache: 'no-store', // Zawsze pobierz najnowsze dane
       });
 
@@ -364,7 +371,13 @@ const db = {
       // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane
       const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
       const result = registrations.filter((r: any) => r.match_id === matchId);
-      console.log('findByMatch:', { matchId, count: result.length, allRegistrations: registrations.length });
+      console.log('findByMatch:', { 
+        matchId, 
+        count: result.length, 
+        allRegistrations: registrations.length,
+        matchingRegistrations: result.map((r: any) => ({ id: r.id, match_id: r.match_id, user_id: r.user_id })),
+        allRegistrationsDetails: registrations.map((r: any) => ({ id: r.id, match_id: r.match_id, user_id: r.user_id })),
+      });
       return result;
     },
     findByUser: async (userId: number) => {
@@ -403,6 +416,21 @@ const db = {
       
       // Zapisz (dla rejestracji nie zapisujemy w cache w writeCollection)
       await writeCollection(REGISTRATIONS_KEY, updatedRegistrations);
+      
+      // Weryfikuj, czy rejestracja została poprawnie zapisana - dodaj małe opóźnienie, aby dać czas na propagację
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const verifyRegistrations = await readCollection(REGISTRATIONS_KEY, [], true);
+      const verifyRegistration = verifyRegistrations.find((r: any) => r.id === newRegistration.id);
+      console.log('Registration create: Verification after write', {
+        registrationId: newRegistration.id,
+        matchId: newRegistration.match_id,
+        userId: newRegistration.user_id,
+        found: !!verifyRegistration,
+        totalRegistrations: verifyRegistrations.length,
+        matchingRegistrations: verifyRegistrations
+          .filter((r: any) => r.match_id === newRegistration.match_id)
+          .map((r: any) => ({ id: r.id, user_id: r.user_id })),
+      });
       
       return newRegistration;
     },
