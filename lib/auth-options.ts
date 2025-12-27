@@ -72,15 +72,31 @@ export const authOptions: NextAuthOptions = {
 
       // Sprawdź czy użytkownik już istnieje po email
       let dbUser = await db.users.findByEmail(userEmail);
+      console.log('signIn callback: User lookup by email', {
+        email: userEmail,
+        found: !!dbUser,
+        provider: account?.provider,
+        providerAccountId: account?.providerAccountId,
+      });
 
       if (!dbUser) {
         // Sprawdź też po OAuth (na wypadek gdyby użytkownik miał już konto OAuth)
         if (account?.provider && account?.providerAccountId) {
           dbUser = await db.users.findByOAuth(account.provider, account.providerAccountId);
+          console.log('signIn callback: User lookup by OAuth', {
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+            found: !!dbUser,
+          });
         }
 
         if (!dbUser) {
           // Utwórz nowego użytkownika
+          console.log('signIn callback: Creating new OAuth user', {
+            email: userEmail,
+            provider: account?.provider,
+            providerAccountId: account?.providerAccountId,
+          });
           dbUser = await db.users.create({
             name: user.name || userEmail.split('@')[0],
             email: userEmail,
@@ -91,6 +107,21 @@ export const authOptions: NextAuthOptions = {
             oauth_provider: account?.provider || null,
             oauth_id: account?.providerAccountId || null,
           });
+          console.log('signIn callback: User created', {
+            userId: dbUser.id,
+            email: dbUser.email,
+            oauth_provider: dbUser.oauth_provider,
+            oauth_id: dbUser.oauth_id,
+          });
+          
+          // Weryfikuj, czy użytkownik został poprawnie zapisany
+          const verifyUser = await db.users.findByOAuth(account?.provider || '', account?.providerAccountId || '');
+          console.log('signIn callback: Verification lookup after create', {
+            provider: account?.provider,
+            providerAccountId: account?.providerAccountId,
+            found: !!verifyUser,
+            verifyUserId: verifyUser?.id,
+          });
         } else {
           // Aktualizuj email jeśli użytkownik istniał tylko po OAuth
           await db.users.update(dbUser.id, {
@@ -100,6 +131,12 @@ export const authOptions: NextAuthOptions = {
       } else {
         // Aktualizuj informacje OAuth jeśli nie były wcześniej ustawione
         if (account && !dbUser.oauth_provider) {
+          console.log('signIn callback: Updating OAuth info for existing user', {
+            userId: dbUser.id,
+            email: dbUser.email,
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+          });
           await db.users.update(dbUser.id, {
             oauth_provider: account.provider,
             oauth_id: account.providerAccountId,

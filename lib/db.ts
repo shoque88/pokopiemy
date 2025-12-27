@@ -208,7 +208,17 @@ const db = {
     },
     findByOAuth: async (provider: string, oauthId: string) => {
       const users = await readCollection(USERS_KEY, []);
-      return users.find((u: any) => u.oauth_provider === provider && u.oauth_id === oauthId);
+      const found = users.find((u: any) => u.oauth_provider === provider && u.oauth_id === oauthId);
+      console.log('db.users.findByOAuth', {
+        provider,
+        oauthId,
+        found: !!found,
+        totalUsers: users.length,
+        allOAuthUsers: users
+          .filter((u: any) => u.oauth_provider)
+          .map((u: any) => ({ id: u.id, provider: u.oauth_provider, oauth_id: u.oauth_id })),
+      });
+      return found;
     },
     findByUsername: async (username: string) => {
       const users = await readCollection(USERS_KEY, []);
@@ -218,8 +228,22 @@ const db = {
       const users = await readCollection(USERS_KEY, []);
       const newId = users.length > 0 ? Math.max(...users.map((u: any) => u.id)) + 1 : 1;
       const newUser = { ...user, id: newId, created_at: new Date().toISOString() };
+      console.log('db.users.create: Creating user', {
+        newId,
+        email: newUser.email,
+        oauth_provider: newUser.oauth_provider,
+        oauth_id: newUser.oauth_id,
+        totalUsersBefore: users.length,
+      });
       users.push(newUser);
       await writeCollection(USERS_KEY, users);
+      console.log('db.users.create: User created and saved', {
+        userId: newUser.id,
+        email: newUser.email,
+        oauth_provider: newUser.oauth_provider,
+        oauth_id: newUser.oauth_id,
+        totalUsersAfter: users.length,
+      });
       return newUser;
     },
     update: async (id: number, updates: any) => {

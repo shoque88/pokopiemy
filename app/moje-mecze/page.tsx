@@ -135,26 +135,36 @@ export default function MyMatchesPage() {
     setSaving(true);
 
     try {
-      // Traktujemy datę i czas jako czas lokalny w miejscu meczu (Polska, UTC+1/+2)
-      // Dla uproszczenia zakładamy, że wszystkie mecze są w Polsce (UTC+1 zimą, UTC+2 latem)
-      // Używamy UTC+1 jako konserwatywne oszacowanie
-      // Jeśli użytkownik wpisuje "18:00", to oznacza "18:00 czasu polskiego" = "17:00 UTC" (zimą)
+      // Traktujemy datę i czas jako czas lokalny w miejscu meczu (Polska, UTC+1 zimą, UTC+2 latem)
+      // Dla uproszczenia zakładamy UTC+1 (zima) jako konserwatywne oszacowanie
+      // Jeśli użytkownik wpisuje "18:00", to oznacza "18:00 czasu polskiego"
+      // "18:00 czasu polskiego" (UTC+1) = "17:00 UTC"
       //
       // Aby traktować datę jako czas polski niezależnie od strefy czasowej przeglądarki użytkownika,
-      // tworzymy Date obiekt jako UTC i odejmujemy offset Polski (UTC+1)
-      // Przykład: "18:00 czasu polskiego" = "18:00 UTC+1" = "17:00 UTC"
-      // Więc tworzymy Date jako "18:00 UTC" i odejmujemy 1 godzinę = "17:00 UTC"
-      const dateStartStr = `${formData.date_start}T${formData.time_start}:00Z`; // Z na końcu oznacza UTC
-      const dateEndStr = `${formData.date_start}T${formData.time_end}:00Z`; // Z na końcu oznacza UTC
+      // tworzymy Date obiekt jako UTC i odejmujemy offset Polski (UTC+1 = 1 godzina)
+      // Przykład: użytkownik wpisuje "18:00" -> chcemy "18:00 czasu polskiego" = "17:00 UTC"
+      // Tworzymy "18:00 UTC" i odejmujemy 1h = "17:00 UTC" ✓
+      const dateStartStr = `${formData.date_start}T${formData.time_start}:00`;
+      const dateEndStr = `${formData.date_start}T${formData.time_end}:00`;
       
-      // Tworzymy Date obiekt interpretując jako UTC
-      const dateStartUTC = new Date(dateStartStr);
-      const dateEndUTC = new Date(dateEndStr);
+      // Tworzymy Date obiekt - bez 'Z' JavaScript zinterpretuje to jako lokalny czas przeglądarki
+      // Ale my chcemy, aby to było zawsze czas polski, więc traktujemy jako UTC i odejmujemy offset
+      // Najprostsze: utwórz jako UTC (dodając Z) i odejmij offset Polski
+      const dateStartAsUTC = new Date(`${formData.date_start}T${formData.time_start}:00Z`);
+      const dateEndAsUTC = new Date(`${formData.date_start}T${formData.time_end}:00Z`);
       
       // Odejmujemy 1 godzinę (offset Polski UTC+1) aby uzyskać właściwy czas UTC
-      // Jeśli użytkownik wpisał "18:00", to chcemy "17:00 UTC" (18:00 czasu polskiego = 17:00 UTC)
-      const dateStart = new Date(dateStartUTC.getTime() - 1 * 60 * 60 * 1000);
-      const dateEnd = new Date(dateEndUTC.getTime() - 1 * 60 * 60 * 1000);
+      // "18:00" użytkownika → "18:00 UTC" → "17:00 UTC" (reprezentuje "18:00 czasu polskiego")
+      const dateStart = new Date(dateStartAsUTC.getTime() - 1 * 60 * 60 * 1000);
+      const dateEnd = new Date(dateEndAsUTC.getTime() - 1 * 60 * 60 * 1000);
+      
+      console.log('MyMatches handleSubmit: Date conversion', {
+        userInput: { date: formData.date_start, start: formData.time_start, end: formData.time_end },
+        dateStartAsUTC: dateStartAsUTC.toISOString(),
+        dateEndAsUTC: dateEndAsUTC.toISOString(),
+        dateStartFinal: dateStart.toISOString(),
+        dateEndFinal: dateEnd.toISOString(),
+      });
 
       const registrationStart = formData.registration_start_date && formData.registration_start_time
         ? new Date(`${formData.registration_start_date}T${formData.registration_start_time}:00`).toISOString()
