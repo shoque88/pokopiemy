@@ -117,23 +117,30 @@ export async function GET(request: NextRequest) {
 // POST - utworzenie meczu (dla wszystkich zalogowanych użytkowników)
 export async function POST(request: NextRequest) {
   try {
+    console.log('POST /api/matches: Starting match creation');
     // Sprawdź autoryzację - obsługuje zarówno JWT jak i NextAuth
     const { getAuthUserOrNextAuth } = await import('@/lib/middleware');
     const authUser = await getAuthUserOrNextAuth(request);
+    console.log('POST /api/matches: Auth check', { authUser: authUser ? { userId: authUser.userId, isAdmin: authUser.isAdmin } : null });
     if (!authUser) {
+      console.error('POST /api/matches: Unauthorized - no authUser');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
     // Pobierz dane użytkownika
     // authUser.userId jest już zweryfikowane w getAuthUserOrNextAuth
+    console.log('POST /api/matches: Fetching user', { userId: authUser.userId });
     const user = await db.users.get(authUser.userId);
+    console.log('POST /api/matches: User fetched', { user: user ? { id: user.id, email: user.email, phone: user.phone, can_create_matches: user.can_create_matches } : null });
     if (!user) {
       console.error('POST /api/matches: User not found (should not happen)', { userId: authUser.userId });
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Sprawdź czy użytkownik może tworzyć mecze
+    console.log('POST /api/matches: Checking can_create_matches', { can_create_matches: user.can_create_matches });
     if (user.can_create_matches !== undefined && user.can_create_matches !== 1) {
+      console.error('POST /api/matches: User cannot create matches', { userId: user.id, can_create_matches: user.can_create_matches });
       return NextResponse.json(
         { error: 'Tworzenie meczów jest zablokowane dla Twojego konta' },
         { status: 403 }
@@ -141,13 +148,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Sprawdź czy użytkownik ma wypełniony telefon lub email
+    console.log('POST /api/matches: Checking phone/email', { phone: user.phone, email: user.email });
     if (!user.phone && !user.email) {
+      console.error('POST /api/matches: User has no phone or email', { userId: user.id });
       return NextResponse.json(
         { error: 'Aby utworzyć mecz, musisz wypełnić numer telefonu lub adres email w profilu' },
         { status: 400 }
       );
     }
 
+    const body = await request.json();
+    console.log('POST /api/matches: Request body received', { 
+      hasName: !!body.name, 
+      hasDateStart: !!body.date_start, 
+      hasDateEnd: !!body.date_end,
+      hasLocation: !!body.location,
+      hasMaxPlayers: !!body.max_players,
+      hasLevel: !!body.level
+    });
+    
     const {
       name,
       description,
@@ -165,7 +184,7 @@ export async function POST(request: NextRequest) {
       registration_end,
       entry_fee,
       is_free,
-    } = await request.json();
+    } = body;
 
     // Dla zwykłych użytkowników, użyj ich telefonu/email jako organizer_phone/organizer_email (jeśli nie podano)
     // Admini mogą podać własny telefon/email
@@ -185,6 +204,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!name || !date_start || !date_end || !location || !max_players || !level) {
+      console.error('POST /api/matches: Missing required fields', { 
+        name: !!name, 
+        date_start: !!date_start, 
+        date_end: !!date_end, 
+        location: !!location, 
+        max_players: !!max_players, 
+        level: !!level 
+      });
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -198,7 +225,10 @@ export async function POST(request: NextRequest) {
       now: new Date().toISOString(),
     });
     
-    const newMatch = await db.matches.create({
+    console.log('POST /api/matches: Calling db.matches.create');
+    let newMatch;
+    try {
+      newMatch = await db.matches.create({
       name,
       description: description || null,
       date_start,
@@ -216,7 +246,16 @@ export async function POST(request: NextRequest) {
       registration_end: registration_end || null,
       entry_fee: entry_fee || null,
       is_free: is_free ? 1 : 0,
-    });
+      });
+      console.log('POST /api/matches: db.matches.create succeeded', { matchId: newMatch?.id });
+    } catch (createError: any) {
+      console.error('POST /api/matches: Error in db.matches.create', { 
+        error: createError?.message, 
+        stack: createError?.stack,
+        code: createError?.code 
+      });
+      throw createError;
+    }
     
     console.log('POST /api/matches: Match created', {
       matchId: newMatch.id,
