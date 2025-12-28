@@ -46,6 +46,7 @@ export interface Registration {
   id: number;
   match_id: number;
   user_id: number;
+  is_waitlist?: number;
   created_at: string;
 }
 
