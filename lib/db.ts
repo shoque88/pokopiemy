@@ -474,23 +474,6 @@ const db = {
       // Jeśli wszystkie próby się nie powiodły, zwróć null (zachowaj kompatybilność z istniejącym kodem)
       console.error('Registration create: All attempts failed', { match_id: registration.match_id, user_id: registration.user_id });
       return null;
-      
-      // Weryfikuj, czy rejestracja została poprawnie zapisana - dodaj małe opóźnienie, aby dać czas na propagację
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const verifyRegistrations = await readCollection(REGISTRATIONS_KEY, [], true);
-      const verifyRegistration = verifyRegistrations.find((r: any) => r.id === newRegistration.id);
-      console.log('Registration create: Verification after write', {
-        registrationId: newRegistration.id,
-        matchId: newRegistration.match_id,
-        userId: newRegistration.user_id,
-        found: !!verifyRegistration,
-        totalRegistrations: verifyRegistrations.length,
-        matchingRegistrations: verifyRegistrations
-          .filter((r: any) => r.match_id === newRegistration.match_id)
-          .map((r: any) => ({ id: r.id, user_id: r.user_id })),
-      });
-      
-      return newRegistration;
     },
     delete: async (id: number) => {
       const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
