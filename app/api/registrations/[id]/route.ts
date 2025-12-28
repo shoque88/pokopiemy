@@ -15,7 +15,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const registration = await db.registrations.get(parseInt(params.id));
+    const registration: any = await db.registrations.get(parseInt(params.id));
     
     if (!registration) {
       return NextResponse.json({ error: 'Registration not found' }, { status: 404 });

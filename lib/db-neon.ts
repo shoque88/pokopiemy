@@ -634,11 +634,13 @@ const db = {
       const result = await sql`SELECT * FROM registrations WHERE id = ${id}`;
       if (result.length === 0) return null;
       const registration: any = result[0];
+      const created_at = registration.created_at instanceof Date ? registration.created_at.toISOString() : registration.created_at;
       return {
         id: registration.id,
         match_id: registration.match_id,
         user_id: registration.user_id,
-        created_at: registration.created_at,
+        is_waitlist: registration.is_waitlist || 0,
+        created_at,
       };
     },
     delete: async (id: number) => {
