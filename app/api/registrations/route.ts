@@ -74,18 +74,26 @@ export async function POST(request: NextRequest) {
 
     // Sprawdź limit graczy
     const registeredCount = await db.registrations.countByMatch(match_id);
-    if (registeredCount >= match.max_players) {
-      return NextResponse.json(
-        { error: 'Match is full' },
-        { status: 400 }
-      );
+    const isFull = registeredCount >= match.max_players;
+    
+    // Jeśli mecz jest pełny, dodaj do listy rezerwowej
+    const isWaitlist = isFull;
+    
+    if (isWaitlist) {
+      console.log('Registration POST: Match is full, adding to waitlist', { 
+        match_id, 
+        user_id: user.id, 
+        registeredCount, 
+        max_players: match.max_players 
+      });
+    } else {
+      console.log('Registration POST: Creating registration', { match_id, user_id: user.id, userName: user.name, userEmail: user.email });
     }
-
-    // Zapisz użytkownika
-    console.log('Registration POST: Creating registration', { match_id, user_id: user.id, userName: user.name, userEmail: user.email });
+    
     const registration = await db.registrations.create({
       match_id,
       user_id: user.id,
+      is_waitlist: isWaitlist ? 1 : 0,
     });
 
     if (!registration) {
@@ -109,7 +117,9 @@ export async function POST(request: NextRequest) {
         id: registration.id,
         match_id,
         user_id: user.id,
+        is_waitlist: registration.is_waitlist || 0,
       },
+      message: isWaitlist ? 'Zostałeś dodany do listy rezerwowej' : 'Zostałeś zapisany na mecz',
     });
   } catch (error) {
     console.error('Registration error:', error);

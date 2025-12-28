@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
 
     const matchesWithRegistrations: MatchWithRegistrations[] = await Promise.all(matches.map(async (match: any) => {
       const registrations = await db.registrations.findByMatch(match.id);
+      const waitlist = await db.registrations.findWaitlistByMatch(match.id);
       const users = await db.users.all();
 
       const registrationsWithUsers = registrations.map((reg: any) => {
@@ -80,6 +81,7 @@ export async function GET(request: NextRequest) {
           id: reg.id,
           match_id: reg.match_id,
           user_id: reg.user_id,
+          is_waitlist: reg.is_waitlist || 0,
           created_at: reg.created_at,
         user: user ? {
           id: user.id,
@@ -88,6 +90,24 @@ export async function GET(request: NextRequest) {
           email: user.email,
           preferred_level: user.preferred_level,
         } : null,
+        };
+      }).filter((reg: any) => reg.user !== null);
+
+      const waitlistWithUsers = waitlist.map((reg: any) => {
+        const user = users.find((u: any) => u.id === reg.user_id);
+        return {
+          id: reg.id,
+          match_id: reg.match_id,
+          user_id: reg.user_id,
+          is_waitlist: 1,
+          created_at: reg.created_at,
+          user: user ? {
+            id: user.id,
+            name: user.name,
+            phone: user.phone,
+            email: user.email,
+            preferred_level: user.preferred_level,
+          } : null,
         };
       }).filter((reg: any) => reg.user !== null);
 
@@ -101,6 +121,8 @@ export async function GET(request: NextRequest) {
         is_recurring: match.is_recurring === 1 || match.is_recurring === true,
         registrations: registrationsWithUsers,
         registered_count: registrations.length,
+        waitlist: waitlistWithUsers,
+        waitlist_count: waitlist.length,
       };
     }));
 

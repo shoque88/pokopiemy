@@ -472,13 +472,14 @@ const db = {
     },
   },
   registrations: {
-    findByMatch: async (matchId: number) => {
-      const result = await sql`
-        SELECT * FROM registrations WHERE match_id = ${matchId} ORDER BY created_at
-      `;
+    findByMatch: async (matchId: number, includeWaitlist: boolean = false) => {
+      const result = includeWaitlist 
+        ? await sql`SELECT * FROM registrations WHERE match_id = ${matchId} ORDER BY is_waitlist ASC, created_at ASC`
+        : await sql`SELECT * FROM registrations WHERE match_id = ${matchId} AND (is_waitlist = 0 OR is_waitlist IS NULL) ORDER BY created_at`;
       console.log('findByMatch:', {
         matchId,
         count: result.length,
+        includeWaitlist,
         allRegistrations: (await sql`SELECT COUNT(*) FROM registrations`)[0].count,
       });
       return result.map((row: any) => {
@@ -487,6 +488,24 @@ const db = {
           id: row.id,
           match_id: row.match_id,
           user_id: row.user_id,
+          is_waitlist: row.is_waitlist || 0,
+          created_at,
+        };
+      });
+    },
+    findWaitlistByMatch: async (matchId: number) => {
+      const result = await sql`
+        SELECT * FROM registrations 
+        WHERE match_id = ${matchId} AND (is_waitlist = 1) 
+        ORDER BY created_at ASC
+      `;
+      return result.map((row: any) => {
+        const created_at = row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at;
+        return {
+          id: row.id,
+          match_id: row.match_id,
+          user_id: row.user_id,
+          is_waitlist: 1,
           created_at,
         };
       });
@@ -499,6 +518,7 @@ const db = {
           id: row.id,
           match_id: row.match_id,
           user_id: row.user_id,
+          is_waitlist: row.is_waitlist || 0,
           created_at,
         };
       });
@@ -535,10 +555,11 @@ const db = {
     // WAŻNE: Używa transakcji z ON CONFLICT, aby rozwiązać race conditions
     create: async (registration: any) => {
       try {
+        const isWaitlist = registration.is_waitlist || 0;
         // Użyj INSERT ... ON CONFLICT, aby uniknąć duplikatów przy równoczesnych zapisach
         const result = await sql`
-          INSERT INTO registrations (match_id, user_id)
-          VALUES (${registration.match_id}, ${registration.user_id})
+          INSERT INTO registrations (match_id, user_id, is_waitlist)
+          VALUES (${registration.match_id}, ${registration.user_id}, ${isWaitlist})
           ON CONFLICT (match_id, user_id) DO NOTHING
           RETURNING *
         `;
@@ -558,11 +579,13 @@ const db = {
           registrationId: newRegistration.id,
           matchId: newRegistration.match_id,
           userId: newRegistration.user_id,
+          isWaitlist: newRegistration.is_waitlist || 0,
         });
         return {
           id: newRegistration.id,
           match_id: newRegistration.match_id,
           user_id: newRegistration.user_id,
+          is_waitlist: newRegistration.is_waitlist || 0,
           created_at,
         };
       } catch (error: any) {
@@ -571,6 +594,39 @@ const db = {
         if (error.code === '23505') { // unique_violation
           return null;
         }
+        throw error;
+      }
+    },
+    moveFromWaitlist: async (matchId: number, userId: number) => {
+      try {
+        // Przenieś z listy rezerwowej do normalnej rejestracji
+        const result = await sql`
+          UPDATE registrations 
+          SET is_waitlist = 0
+          WHERE match_id = ${matchId} AND user_id = ${userId} AND (is_waitlist = 1)
+          RETURNING *
+        `;
+        
+        if (result.length === 0) {
+          return null;
+        }
+        
+        const updated: any = result[0];
+        const created_at = updated.created_at instanceof Date ? updated.created_at.toISOString() : updated.created_at;
+        console.log('Registration moveFromWaitlist: Moved successfully', {
+          registrationId: updated.id,
+          matchId: updated.match_id,
+          userId: updated.user_id,
+        });
+        return {
+          id: updated.id,
+          match_id: updated.match_id,
+          user_id: updated.user_id,
+          is_waitlist: 0,
+          created_at,
+        };
+      } catch (error: any) {
+        console.error('Registration moveFromWaitlist: Error', error);
         throw error;
       }
     },
@@ -590,13 +646,19 @@ const db = {
       return result.length > 0;
     },
     countByMatch: async (matchId: number) => {
-      const result = await sql`SELECT COUNT(*) as count FROM registrations WHERE match_id = ${matchId}`;
+      // Liczy tylko normalne rejestracje (bez listy rezerwowej)
+      const result = await sql`SELECT COUNT(*) as count FROM registrations WHERE match_id = ${matchId} AND (is_waitlist = 0 OR is_waitlist IS NULL)`;
       const count = parseInt(result[0].count);
       console.log('countByMatch:', {
         matchId,
         count,
         allRegistrations: (await sql`SELECT COUNT(*) FROM registrations`)[0].count,
       });
+      return count;
+    },
+    countWaitlistByMatch: async (matchId: number) => {
+      const result = await sql`SELECT COUNT(*) as count FROM registrations WHERE match_id = ${matchId} AND is_waitlist = 1`;
+      const count = parseInt(result[0].count);
       return count;
     },
     deleteByMatch: async (matchId: number) => {

@@ -26,10 +26,35 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Pobierz informacje o rejestracji przed usunięciem
+    const matchId = registration.match_id;
+    const wasWaitlist = (registration.is_waitlist || 0) === 1;
+    
     const deleted = await db.registrations.delete(parseInt(params.id));
 
     if (!deleted) {
       return NextResponse.json({ error: 'Failed to delete registration' }, { status: 500 });
+    }
+
+    // Jeśli to była normalna rejestracja (nie z listy rezerwowej) i mecz jest pełny, przenieś pierwszą osobę z listy rezerwowej
+    if (!wasWaitlist) {
+      const waitlist = await db.registrations.findWaitlistByMatch(matchId);
+      if (waitlist.length > 0) {
+        const firstWaitlistUser = waitlist[0];
+        console.log('Registration DELETE: Moving first user from waitlist', {
+          matchId,
+          waitlistUserId: firstWaitlistUser.user_id,
+          waitlistRegistrationId: firstWaitlistUser.id,
+        });
+        const moved = await db.registrations.moveFromWaitlist(matchId, firstWaitlistUser.user_id);
+        if (moved) {
+          console.log('Registration DELETE: Successfully moved user from waitlist', {
+            matchId,
+            movedRegistrationId: moved.id,
+            userId: moved.user_id,
+          });
+        }
+      }
     }
 
     return NextResponse.json({ success: true });
