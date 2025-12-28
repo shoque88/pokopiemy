@@ -29,6 +29,16 @@ const db = {
       const result = await sql`SELECT * FROM users ORDER BY id`;
       return result.map((row: any) => ({
         ...row,
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        password: row.password || null,
+        phone: row.phone || null,
+        preferred_level: row.preferred_level || null,
+        username: row.username || null,
+        oauth_provider: row.oauth_provider || null,
+        oauth_id: row.oauth_id || null,
+        created_at: row.created_at,
         is_admin: row.is_admin || 0,
         is_superuser: row.is_superuser || 0,
         can_create_matches: row.can_create_matches ?? 1,
@@ -41,7 +51,16 @@ const db = {
       const row: any = result[0];
       return {
         ...row,
+        id: row.id,
+        name: row.name,
+        email: row.email,
         password: row.password || null,
+        phone: row.phone || null,
+        preferred_level: row.preferred_level || null,
+        username: row.username || null,
+        oauth_provider: row.oauth_provider || null,
+        oauth_id: row.oauth_id || null,
+        created_at: row.created_at,
         is_admin: row.is_admin || 0,
         is_superuser: row.is_superuser || 0,
         can_create_matches: row.can_create_matches ?? 1,
@@ -54,7 +73,16 @@ const db = {
       const row: any = result[0];
       return {
         ...row,
+        id: row.id,
+        name: row.name,
+        email: row.email,
         password: row.password || null,
+        phone: row.phone || null,
+        preferred_level: row.preferred_level || null,
+        username: row.username || null,
+        oauth_provider: row.oauth_provider || null,
+        oauth_id: row.oauth_id || null,
+        created_at: row.created_at,
         is_admin: row.is_admin || 0,
         is_superuser: row.is_superuser || 0,
         can_create_matches: row.can_create_matches ?? 1,
@@ -79,12 +107,23 @@ const db = {
       });
       
       if (found) {
+        const foundUser: any = found;
         return {
-          ...found,
-          is_admin: found.is_admin || 0,
-          is_superuser: found.is_superuser || 0,
-          can_create_matches: found.can_create_matches ?? 1,
-          can_register_to_matches: found.can_register_to_matches ?? 1,
+          ...foundUser,
+          id: foundUser.id,
+          name: foundUser.name,
+          email: foundUser.email,
+          password: foundUser.password || null,
+          phone: foundUser.phone || null,
+          preferred_level: foundUser.preferred_level || null,
+          username: foundUser.username || null,
+          oauth_provider: foundUser.oauth_provider || null,
+          oauth_id: foundUser.oauth_id || null,
+          created_at: foundUser.created_at,
+          is_admin: foundUser.is_admin || 0,
+          is_superuser: foundUser.is_superuser || 0,
+          can_create_matches: foundUser.can_create_matches ?? 1,
+          can_register_to_matches: foundUser.can_register_to_matches ?? 1,
         };
       }
       return null;
@@ -95,7 +134,16 @@ const db = {
       const row: any = result[0];
       return {
         ...row,
+        id: row.id,
+        name: row.name,
+        email: row.email,
         password: row.password || null,
+        phone: row.phone || null,
+        preferred_level: row.preferred_level || null,
+        username: row.username || null,
+        oauth_provider: row.oauth_provider || null,
+        oauth_id: row.oauth_id || null,
+        created_at: row.created_at,
         is_admin: row.is_admin || 0,
         is_superuser: row.is_superuser || 0,
         can_create_matches: row.can_create_matches ?? 1,
@@ -119,7 +167,7 @@ const db = {
         )
         RETURNING *
       `;
-      const newUser = result[0];
+      const newUser: any = result[0];
       console.log('db.users.create: User created', {
         userId: newUser.id,
         email: newUser.email,
@@ -128,6 +176,16 @@ const db = {
       });
       return {
         ...newUser,
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        password: newUser.password || null,
+        phone: newUser.phone || null,
+        preferred_level: newUser.preferred_level || null,
+        username: newUser.username || null,
+        oauth_provider: newUser.oauth_provider || null,
+        oauth_id: newUser.oauth_id || null,
+        created_at: newUser.created_at,
         is_admin: newUser.is_admin || 0,
         is_superuser: newUser.is_superuser || 0,
         can_create_matches: newUser.can_create_matches ?? 1,
@@ -154,9 +212,19 @@ const db = {
         RETURNING *
       `;
       if (result.length === 0) return null;
-      const updated = result[0];
+      const updated: any = result[0];
       return {
         ...updated,
+        id: updated.id,
+        name: updated.name,
+        email: updated.email,
+        password: updated.password || null,
+        phone: updated.phone || null,
+        preferred_level: updated.preferred_level || null,
+        username: updated.username || null,
+        oauth_provider: updated.oauth_provider || null,
+        oauth_id: updated.oauth_id || null,
+        created_at: updated.created_at,
         is_admin: updated.is_admin || 0,
         is_superuser: updated.is_superuser || 0,
         can_create_matches: updated.can_create_matches ?? 1,
