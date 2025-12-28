@@ -38,9 +38,10 @@ const db = {
     get: async (id: number) => {
       const result = await sql`SELECT * FROM users WHERE id = ${id}`;
       if (result.length === 0) return null;
-      const row = result[0];
+      const row: any = result[0];
       return {
         ...row,
+        password: row.password || null,
         is_admin: row.is_admin || 0,
         is_superuser: row.is_superuser || 0,
         can_create_matches: row.can_create_matches ?? 1,
@@ -50,9 +51,10 @@ const db = {
     findByEmail: async (email: string) => {
       const result = await sql`SELECT * FROM users WHERE email = ${email}`;
       if (result.length === 0) return null;
-      const row = result[0];
+      const row: any = result[0];
       return {
         ...row,
+        password: row.password || null,
         is_admin: row.is_admin || 0,
         is_superuser: row.is_superuser || 0,
         can_create_matches: row.can_create_matches ?? 1,
@@ -90,9 +92,10 @@ const db = {
     findByUsername: async (username: string) => {
       const result = await sql`SELECT * FROM users WHERE username = ${username}`;
       if (result.length === 0) return null;
-      const row = result[0];
+      const row: any = result[0];
       return {
         ...row,
+        password: row.password || null,
         is_admin: row.is_admin || 0,
         is_superuser: row.is_superuser || 0,
         can_create_matches: row.can_create_matches ?? 1,
