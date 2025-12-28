@@ -235,13 +235,21 @@ const db = {
   matches: {
     all: async () => {
       const result = await sql`SELECT * FROM matches ORDER BY id`;
-      return result.map((row: any) => ({
+      return result.map((row: any) => {
+        // Konwertuj daty Date na stringi ISO
+        const date_start = row.date_start instanceof Date ? row.date_start.toISOString() : row.date_start;
+        const date_end = row.date_end instanceof Date ? row.date_end.toISOString() : row.date_end;
+        const registration_start = row.registration_start instanceof Date ? row.registration_start.toISOString() : (row.registration_start || null);
+        const registration_end = row.registration_end instanceof Date ? row.registration_end.toISOString() : (row.registration_end || null);
+        const created_at = row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at;
+        
+        return {
         ...row,
         id: row.id,
         name: row.name,
         description: row.description || null,
-        date_start: row.date_start,
-        date_end: row.date_end,
+        date_start,
+        date_end,
         location: row.location,
         max_players: row.max_players,
         organizer_phone: row.organizer_phone || null,
@@ -253,12 +261,13 @@ const db = {
         level: row.level || 'kopanina',
         is_recurring: toBool(row.is_recurring),
         recurrence_frequency: row.recurrence_frequency || null,
-        registration_start: row.registration_start || null,
-        registration_end: row.registration_end || null,
+        registration_start,
+        registration_end,
         entry_fee: row.entry_fee || null,
         is_free: toBool(row.is_free),
-        created_at: row.created_at,
-      }));
+        created_at,
+      };
+      });
     },
     get: async (id: number) => {
       const result = await sql`SELECT * FROM matches WHERE id = ${id}`;
@@ -268,13 +277,21 @@ const db = {
       }
       const match: any = result[0];
       console.log('matches.get:', { id, found: true, totalMatches: (await sql`SELECT COUNT(*) FROM matches`)[0].count });
+      
+      // Konwertuj daty Date na stringi ISO
+      const date_start = match.date_start instanceof Date ? match.date_start.toISOString() : match.date_start;
+      const date_end = match.date_end instanceof Date ? match.date_end.toISOString() : match.date_end;
+      const registration_start = match.registration_start instanceof Date ? match.registration_start.toISOString() : (match.registration_start || null);
+      const registration_end = match.registration_end instanceof Date ? match.registration_end.toISOString() : (match.registration_end || null);
+      const created_at = match.created_at instanceof Date ? match.created_at.toISOString() : match.created_at;
+      
       return {
         ...match,
         id: match.id,
         name: match.name,
         description: match.description || null,
-        date_start: match.date_start,
-        date_end: match.date_end,
+        date_start,
+        date_end,
         location: match.location,
         max_players: match.max_players,
         organizer_phone: match.organizer_phone || null,
@@ -286,11 +303,11 @@ const db = {
         level: match.level || 'kopanina',
         is_recurring: toBool(match.is_recurring),
         recurrence_frequency: match.recurrence_frequency || null,
-        registration_start: match.registration_start || null,
-        registration_end: match.registration_end || null,
+        registration_start,
+        registration_end,
         entry_fee: match.entry_fee || null,
         is_free: toBool(match.is_free),
-        created_at: match.created_at,
+        created_at,
       };
     },
     create: async (match: any) => {
@@ -338,11 +355,11 @@ const db = {
         level: newMatch.level || 'kopanina',
         is_recurring: toBool(newMatch.is_recurring),
         recurrence_frequency: newMatch.recurrence_frequency || null,
-        registration_start: newMatch.registration_start || null,
-        registration_end: newMatch.registration_end || null,
+        registration_start,
+        registration_end,
         entry_fee: newMatch.entry_fee || null,
         is_free: toBool(newMatch.is_free),
-        created_at: newMatch.created_at,
+        created_at,
       };
     },
     update: async (id: number, updates: any) => {
@@ -372,13 +389,21 @@ const db = {
       `;
       if (result.length === 0) return null;
       const updated: any = result[0];
+      
+      // Konwertuj daty Date na stringi ISO
+      const date_start = updated.date_start instanceof Date ? updated.date_start.toISOString() : updated.date_start;
+      const date_end = updated.date_end instanceof Date ? updated.date_end.toISOString() : updated.date_end;
+      const registration_start = updated.registration_start instanceof Date ? updated.registration_start.toISOString() : (updated.registration_start || null);
+      const registration_end = updated.registration_end instanceof Date ? updated.registration_end.toISOString() : (updated.registration_end || null);
+      const created_at = updated.created_at instanceof Date ? updated.created_at.toISOString() : updated.created_at;
+      
       return {
         ...updated,
         id: updated.id,
         name: updated.name,
         description: updated.description || null,
-        date_start: updated.date_start,
-        date_end: updated.date_end,
+        date_start,
+        date_end,
         location: updated.location,
         max_players: updated.max_players,
         organizer_phone: updated.organizer_phone || null,
@@ -390,11 +415,11 @@ const db = {
         level: updated.level || 'kopanina',
         is_recurring: toBool(updated.is_recurring),
         recurrence_frequency: updated.recurrence_frequency || null,
-        registration_start: updated.registration_start || null,
-        registration_end: updated.registration_end || null,
+        registration_start,
+        registration_end,
         entry_fee: updated.entry_fee || null,
         is_free: toBool(updated.is_free),
-        created_at: updated.created_at,
+        created_at,
       };
     },
     delete: async (id: number) => {
@@ -403,13 +428,21 @@ const db = {
     },
     findByStatus: async (status: string) => {
       const result = await sql`SELECT * FROM matches WHERE status = ${status} ORDER BY id`;
-      return result.map((row: any) => ({
+      return result.map((row: any) => {
+        // Konwertuj daty Date na stringi ISO
+        const date_start = row.date_start instanceof Date ? row.date_start.toISOString() : row.date_start;
+        const date_end = row.date_end instanceof Date ? row.date_end.toISOString() : row.date_end;
+        const registration_start = row.registration_start instanceof Date ? row.registration_start.toISOString() : (row.registration_start || null);
+        const registration_end = row.registration_end instanceof Date ? row.registration_end.toISOString() : (row.registration_end || null);
+        const created_at = row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at;
+        
+        return {
         ...row,
         id: row.id,
         name: row.name,
         description: row.description || null,
-        date_start: row.date_start,
-        date_end: row.date_end,
+        date_start,
+        date_end,
         location: row.location,
         max_players: row.max_players,
         organizer_phone: row.organizer_phone || null,
@@ -421,12 +454,13 @@ const db = {
         level: row.level || 'kopanina',
         is_recurring: toBool(row.is_recurring),
         recurrence_frequency: row.recurrence_frequency || null,
-        registration_start: row.registration_start || null,
-        registration_end: row.registration_end || null,
+        registration_start,
+        registration_end,
         entry_fee: row.entry_fee || null,
         is_free: toBool(row.is_free),
-        created_at: row.created_at,
-      }));
+        created_at,
+      };
+      });
     },
   },
   registrations: {
@@ -439,24 +473,56 @@ const db = {
         count: result.length,
         allRegistrations: (await sql`SELECT COUNT(*) FROM registrations`)[0].count,
       });
-      return result;
+      return result.map((row: any) => {
+        const created_at = row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at;
+        return {
+          id: row.id,
+          match_id: row.match_id,
+          user_id: row.user_id,
+          created_at,
+        };
+      });
     },
     findByUser: async (userId: number) => {
-      return await sql`SELECT * FROM registrations WHERE user_id = ${userId} ORDER BY created_at`;
+      const result = await sql`SELECT * FROM registrations WHERE user_id = ${userId} ORDER BY created_at`;
+      return result.map((row: any) => {
+        const created_at = row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at;
+        return {
+          id: row.id,
+          match_id: row.match_id,
+          user_id: row.user_id,
+          created_at,
+        };
+      });
     },
     findByMatchAndUser: async (matchId: number, userId: number) => {
       const result = await sql`
         SELECT * FROM registrations 
         WHERE match_id = ${matchId} AND user_id = ${userId}
       `;
-      const found = result.length > 0 ? result[0] : null;
+      if (result.length === 0) {
+        console.log('findByMatchAndUser:', {
+          matchId,
+          userId,
+          found: false,
+          allRegistrations: (await sql`SELECT COUNT(*) FROM registrations`)[0].count,
+        });
+        return null;
+      }
+      const row: any = result[0];
+      const created_at = row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at;
       console.log('findByMatchAndUser:', {
         matchId,
         userId,
-        found: !!found,
+        found: true,
         allRegistrations: (await sql`SELECT COUNT(*) FROM registrations`)[0].count,
       });
-      return found;
+      return {
+        id: row.id,
+        match_id: row.match_id,
+        user_id: row.user_id,
+        created_at,
+      };
     },
     // WAŻNE: Używa transakcji z ON CONFLICT, aby rozwiązać race conditions
     create: async (registration: any) => {
@@ -478,13 +544,19 @@ const db = {
           return null;
         }
         
-        const newRegistration = result[0];
+        const newRegistration: any = result[0];
+        const created_at = newRegistration.created_at instanceof Date ? newRegistration.created_at.toISOString() : newRegistration.created_at;
         console.log('Registration create: Created successfully', {
           registrationId: newRegistration.id,
           matchId: newRegistration.match_id,
           userId: newRegistration.user_id,
         });
-        return newRegistration;
+        return {
+          id: newRegistration.id,
+          match_id: newRegistration.match_id,
+          user_id: newRegistration.user_id,
+          created_at,
+        };
       } catch (error: any) {
         console.error('Registration create: Error', error);
         // Jeśli błąd to duplikat, zwróć null
