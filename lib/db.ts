@@ -392,30 +392,88 @@ const db = {
       return result;
     },
     create: async (registration: any) => {
-      // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane przed sprawdzeniem duplikatów
-      const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
-      console.log('Registration create: Current registrations count:', registrations.length);
+      // Retry logic dla obsługi race conditions w środowisku serverless
+      const maxRetries = 3;
+      let lastError = null;
       
-      // Sprawdź czy już istnieje - użyj dokładnego dopasowania
-      const exists = registrations.some(
-        (r: any) => r.match_id === registration.match_id && r.user_id === registration.user_id
-      );
-      if (exists) {
-        console.log('Registration create: Duplicate detected', { match_id: registration.match_id, user_id: registration.user_id });
-        return null;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane przed sprawdzeniem duplikatów
+          // Dodaj małe opóźnienie na początku każdej próby (oprócz pierwszej), aby dać czas na propagację danych
+          if (attempt > 1) {
+            await new Promise(resolve => setTimeout(resolve, 200 * attempt));
+          }
+          
+          const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
+          console.log(`Registration create: Attempt ${attempt}, current registrations count:`, registrations.length);
+          
+          // Sprawdź czy już istnieje - użyj dokładnego dopasowania
+          const exists = registrations.some(
+            (r: any) => r.match_id === registration.match_id && r.user_id === registration.user_id
+          );
+          if (exists) {
+            console.log('Registration create: Duplicate detected', { match_id: registration.match_id, user_id: registration.user_id });
+            return null;
+          }
+          
+          // Utwórz nową rejestrację - użyj maksymalnego ID + 1
+          // Dla obsługi race conditions, sprawdzamy czy wygenerowane ID już istnieje
+          const maxId = registrations.length > 0 ? Math.max(...registrations.map((r: any) => r.id || 0)) : 0;
+          let newId = maxId + 1;
+          
+          // Sprawdź czy ID już istnieje (może się zdarzyć przy równoczesnych zapisach)
+          // Jeśli tak, użyj większego ID
+          while (registrations.some((r: any) => r.id === newId)) {
+            newId++;
+            console.log(`Registration create: ID ${newId - 1} already exists, using ${newId}`);
+          }
+          const newRegistration = { ...registration, id: newId, created_at: new Date().toISOString() };
+          console.log(`Registration create: Attempt ${attempt}, creating new registration`, { 
+            id: newId, 
+            match_id: registration.match_id, 
+            user_id: registration.user_id,
+            maxId,
+            totalRegistrations: registrations.length,
+          });
+          
+          // Dodaj nową rejestrację do listy (używamy spread operator, aby utworzyć nową tablicę)
+          const updatedRegistrations = [...registrations, newRegistration];
+          console.log('Registration create: Updated registrations count:', updatedRegistrations.length);
+          
+          // Zapisz (dla rejestracji nie zapisujemy w cache w writeCollection)
+          await writeCollection(REGISTRATIONS_KEY, updatedRegistrations);
+          
+          // Weryfikuj, czy rejestracja została poprawnie zapisana - dodaj opóźnienie, aby dać czas na propagację
+          await new Promise(resolve => setTimeout(resolve, 300));
+          const verifyRegistrations = await readCollection(REGISTRATIONS_KEY, [], true);
+          const verifyRegistration = verifyRegistrations.find((r: any) => r.id === newId);
+          
+          if (verifyRegistration) {
+            console.log('Registration create: Verification successful', {
+              registrationId: newRegistration.id,
+              matchId: newRegistration.match_id,
+              userId: newRegistration.user_id,
+              totalRegistrations: verifyRegistrations.length,
+            });
+            return newRegistration;
+          } else {
+            // Rejestracja nie została znaleziona - spróbuj ponownie
+            console.warn(`Registration create: Attempt ${attempt} failed - registration not found after write, retrying...`);
+            lastError = new Error('Registration not found after write');
+            continue;
+          }
+        } catch (error) {
+          console.error(`Registration create: Attempt ${attempt} failed with error:`, error);
+          lastError = error;
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 200 * attempt));
+          }
+        }
       }
       
-      // Utwórz nową rejestrację
-      const newId = registrations.length > 0 ? Math.max(...registrations.map((r: any) => r.id)) + 1 : 1;
-      const newRegistration = { ...registration, id: newId, created_at: new Date().toISOString() };
-      console.log('Registration create: Creating new registration', { id: newId, match_id: registration.match_id, user_id: registration.user_id });
-      
-      // Dodaj nową rejestrację do listy (używamy spread operator, aby utworzyć nową tablicę)
-      const updatedRegistrations = [...registrations, newRegistration];
-      console.log('Registration create: Updated registrations count:', updatedRegistrations.length);
-      
-      // Zapisz (dla rejestracji nie zapisujemy w cache w writeCollection)
-      await writeCollection(REGISTRATIONS_KEY, updatedRegistrations);
+      // Jeśli wszystkie próby się nie powiodły, zwróć null (zachowaj kompatybilność z istniejącym kodem)
+      console.error('Registration create: All attempts failed', { match_id: registration.match_id, user_id: registration.user_id });
+      return null;
       
       // Weryfikuj, czy rejestracja została poprawnie zapisana - dodaj małe opóźnienie, aby dać czas na propagację
       await new Promise(resolve => setTimeout(resolve, 100));
