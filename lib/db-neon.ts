@@ -337,13 +337,21 @@ const db = {
         matchName: newMatch.name,
         totalMatches: (await sql`SELECT COUNT(*) FROM matches`)[0].count,
       });
+      
+      // Konwertuj daty Date na stringi ISO
+      const date_start = newMatch.date_start instanceof Date ? newMatch.date_start.toISOString() : newMatch.date_start;
+      const date_end = newMatch.date_end instanceof Date ? newMatch.date_end.toISOString() : newMatch.date_end;
+      const registration_start = newMatch.registration_start instanceof Date ? newMatch.registration_start.toISOString() : (newMatch.registration_start || null);
+      const registration_end = newMatch.registration_end instanceof Date ? newMatch.registration_end.toISOString() : (newMatch.registration_end || null);
+      const created_at = newMatch.created_at instanceof Date ? newMatch.created_at.toISOString() : newMatch.created_at;
+      
       return {
         ...newMatch,
         id: newMatch.id,
         name: newMatch.name,
         description: newMatch.description || null,
-        date_start: newMatch.date_start,
-        date_end: newMatch.date_end,
+        date_start,
+        date_end,
         location: newMatch.location,
         max_players: newMatch.max_players,
         organizer_phone: newMatch.organizer_phone || null,
