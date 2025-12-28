@@ -24,7 +24,7 @@ export async function getAuthUserOrNextAuth(request: NextRequest) {
   const jwtUser = getAuthUser(request);
   if (jwtUser) {
     // Sprawdź, czy użytkownik rzeczywiście istnieje w bazie danych
-    const db = await import('./db');
+    const db = await import('./db-neon');
     const user = await db.default.users.get(jwtUser.userId);
     if (!user) {
       console.error('getAuthUserOrNextAuth: JWT user does not exist in database', { userId: jwtUser.userId });
