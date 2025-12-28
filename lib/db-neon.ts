@@ -237,12 +237,27 @@ const db = {
       const result = await sql`SELECT * FROM matches ORDER BY id`;
       return result.map((row: any) => ({
         ...row,
+        id: row.id,
+        name: row.name,
+        description: row.description || null,
+        date_start: row.date_start,
+        date_end: row.date_end,
+        location: row.location,
+        max_players: row.max_players,
+        organizer_phone: row.organizer_phone || null,
+        organizer_email: row.organizer_email || null,
         payment_methods: typeof row.payment_methods === 'string' 
           ? JSON.parse(row.payment_methods || '[]')
           : row.payment_methods || [],
-        is_recurring: toBool(row.is_recurring),
-        is_free: toBool(row.is_free),
         status: row.status || 'active',
+        level: row.level || 'kopanina',
+        is_recurring: toBool(row.is_recurring),
+        recurrence_frequency: row.recurrence_frequency || null,
+        registration_start: row.registration_start || null,
+        registration_end: row.registration_end || null,
+        entry_fee: row.entry_fee || null,
+        is_free: toBool(row.is_free),
+        created_at: row.created_at,
       }));
     },
     get: async (id: number) => {
@@ -251,16 +266,31 @@ const db = {
         console.log('matches.get:', { id, found: false, totalMatches: (await sql`SELECT COUNT(*) FROM matches`)[0].count });
         return null;
       }
-      const match = result[0];
+      const match: any = result[0];
       console.log('matches.get:', { id, found: true, totalMatches: (await sql`SELECT COUNT(*) FROM matches`)[0].count });
       return {
         ...match,
+        id: match.id,
+        name: match.name,
+        description: match.description || null,
+        date_start: match.date_start,
+        date_end: match.date_end,
+        location: match.location,
+        max_players: match.max_players,
+        organizer_phone: match.organizer_phone || null,
+        organizer_email: match.organizer_email || null,
         payment_methods: typeof match.payment_methods === 'string'
           ? JSON.parse(match.payment_methods || '[]')
           : match.payment_methods || [],
-        is_recurring: toBool(match.is_recurring),
-        is_free: toBool(match.is_free),
         status: match.status || 'active',
+        level: match.level || 'kopanina',
+        is_recurring: toBool(match.is_recurring),
+        recurrence_frequency: match.recurrence_frequency || null,
+        registration_start: match.registration_start || null,
+        registration_end: match.registration_end || null,
+        entry_fee: match.entry_fee || null,
+        is_free: toBool(match.is_free),
+        created_at: match.created_at,
       };
     },
     create: async (match: any) => {
@@ -284,7 +314,7 @@ const db = {
         )
         RETURNING *
       `;
-      const newMatch = result[0];
+      const newMatch: any = result[0];
       console.log('Match create: Created', {
         newId: newMatch.id,
         matchName: newMatch.name,
@@ -292,11 +322,27 @@ const db = {
       });
       return {
         ...newMatch,
+        id: newMatch.id,
+        name: newMatch.name,
+        description: newMatch.description || null,
+        date_start: newMatch.date_start,
+        date_end: newMatch.date_end,
+        location: newMatch.location,
+        max_players: newMatch.max_players,
+        organizer_phone: newMatch.organizer_phone || null,
+        organizer_email: newMatch.organizer_email || null,
         payment_methods: typeof newMatch.payment_methods === 'string'
           ? JSON.parse(newMatch.payment_methods || '[]')
           : newMatch.payment_methods || [],
+        status: newMatch.status || 'active',
+        level: newMatch.level || 'kopanina',
         is_recurring: toBool(newMatch.is_recurring),
+        recurrence_frequency: newMatch.recurrence_frequency || null,
+        registration_start: newMatch.registration_start || null,
+        registration_end: newMatch.registration_end || null,
+        entry_fee: newMatch.entry_fee || null,
         is_free: toBool(newMatch.is_free),
+        created_at: newMatch.created_at,
       };
     },
     update: async (id: number, updates: any) => {
@@ -325,14 +371,30 @@ const db = {
         RETURNING *
       `;
       if (result.length === 0) return null;
-      const updated = result[0];
+      const updated: any = result[0];
       return {
         ...updated,
+        id: updated.id,
+        name: updated.name,
+        description: updated.description || null,
+        date_start: updated.date_start,
+        date_end: updated.date_end,
+        location: updated.location,
+        max_players: updated.max_players,
+        organizer_phone: updated.organizer_phone || null,
+        organizer_email: updated.organizer_email || null,
         payment_methods: typeof updated.payment_methods === 'string'
           ? JSON.parse(updated.payment_methods || '[]')
           : updated.payment_methods || [],
+        status: updated.status || 'active',
+        level: updated.level || 'kopanina',
         is_recurring: toBool(updated.is_recurring),
+        recurrence_frequency: updated.recurrence_frequency || null,
+        registration_start: updated.registration_start || null,
+        registration_end: updated.registration_end || null,
+        entry_fee: updated.entry_fee || null,
         is_free: toBool(updated.is_free),
+        created_at: updated.created_at,
       };
     },
     delete: async (id: number) => {
@@ -343,12 +405,27 @@ const db = {
       const result = await sql`SELECT * FROM matches WHERE status = ${status} ORDER BY id`;
       return result.map((row: any) => ({
         ...row,
+        id: row.id,
+        name: row.name,
+        description: row.description || null,
+        date_start: row.date_start,
+        date_end: row.date_end,
+        location: row.location,
+        max_players: row.max_players,
+        organizer_phone: row.organizer_phone || null,
+        organizer_email: row.organizer_email || null,
         payment_methods: typeof row.payment_methods === 'string' 
           ? JSON.parse(row.payment_methods || '[]')
           : row.payment_methods || [],
-        is_recurring: toBool(row.is_recurring),
-        is_free: toBool(row.is_free),
         status: row.status || 'active',
+        level: row.level || 'kopanina',
+        is_recurring: toBool(row.is_recurring),
+        recurrence_frequency: row.recurrence_frequency || null,
+        registration_start: row.registration_start || null,
+        registration_end: row.registration_end || null,
+        entry_fee: row.entry_fee || null,
+        is_free: toBool(row.is_free),
+        created_at: row.created_at,
       }));
     },
   },
