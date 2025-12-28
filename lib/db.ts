@@ -441,27 +441,18 @@ const db = {
           console.log('Registration create: Updated registrations count:', updatedRegistrations.length);
           
           // Zapisz (dla rejestracji nie zapisujemy w cache w writeCollection)
+          // Jeśli writeCollection się powiedzie (nie rzuci błędu), założymy że rejestracja została zapisana
+          // Nie weryfikujemy odczytem, ponieważ propagacja danych w Vercel Blob może mieć opóźnienie CDN
           await writeCollection(REGISTRATIONS_KEY, updatedRegistrations);
           
-          // Weryfikuj, czy rejestracja została poprawnie zapisana - dodaj opóźnienie, aby dać czas na propagację
-          await new Promise(resolve => setTimeout(resolve, 300));
-          const verifyRegistrations = await readCollection(REGISTRATIONS_KEY, [], true);
-          const verifyRegistration = verifyRegistrations.find((r: any) => r.id === newId);
-          
-          if (verifyRegistration) {
-            console.log('Registration create: Verification successful', {
-              registrationId: newRegistration.id,
-              matchId: newRegistration.match_id,
-              userId: newRegistration.user_id,
-              totalRegistrations: verifyRegistrations.length,
-            });
-            return newRegistration;
-          } else {
-            // Rejestracja nie została znaleziona - spróbuj ponownie
-            console.warn(`Registration create: Attempt ${attempt} failed - registration not found after write, retrying...`);
-            lastError = new Error('Registration not found after write');
-            continue;
-          }
+          // Zapisz się powiódł - zwróć rejestrację
+          console.log('Registration create: Write successful', {
+            registrationId: newRegistration.id,
+            matchId: newRegistration.match_id,
+            userId: newRegistration.user_id,
+            totalRegistrations: updatedRegistrations.length,
+          });
+          return newRegistration;
         } catch (error) {
           console.error(`Registration create: Attempt ${attempt} failed with error:`, error);
           lastError = error;
