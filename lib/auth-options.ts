@@ -65,6 +65,8 @@ export const authOptions: NextAuthOptions = {
             is_admin: 0,
             oauth_provider: 'facebook',
             oauth_id: account.providerAccountId,
+            can_create_matches: 1,
+            can_register_to_matches: 1,
           });
         }
 
@@ -113,6 +115,8 @@ export const authOptions: NextAuthOptions = {
             is_admin: 0,
             oauth_provider: account?.provider || null,
             oauth_id: account?.providerAccountId || null,
+            can_create_matches: 1,
+            can_register_to_matches: 1,
           });
           console.log('signIn callback: User created', {
             userId: dbUser.id,

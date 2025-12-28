@@ -162,7 +162,7 @@ const db = {
           ${user.phone || null}, ${user.preferred_level || null},
           ${toInt(user.is_admin)}, ${toInt(user.is_superuser) || 0},
           ${user.username || null},
-          ${toInt(user.can_create_matches) ?? 1}, ${toInt(user.can_register_to_matches) ?? 1},
+          ${user.can_create_matches !== undefined ? toInt(user.can_create_matches) : 1}, ${user.can_register_to_matches !== undefined ? toInt(user.can_register_to_matches) : 1},
           ${user.oauth_provider || null}, ${user.oauth_id || null}
         )
         RETURNING *

@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
       phone: phone || null,
       preferred_level: preferred_level || null,
       is_admin: 0,
+      can_create_matches: 1,
+      can_register_to_matches: 1,
     });
 
     // Generuj token
