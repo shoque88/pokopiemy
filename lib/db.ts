@@ -416,23 +416,36 @@ const db = {
             return null;
           }
           
-          // Utwórz nową rejestrację - użyj maksymalnego ID + 1
-          // Dla obsługi race conditions, sprawdzamy czy wygenerowane ID już istnieje
-          const maxId = registrations.length > 0 ? Math.max(...registrations.map((r: any) => r.id || 0)) : 0;
-          let newId = maxId + 1;
+          // Utwórz nową rejestrację - użyj timestamp-based ID, aby uniknąć kolizji przy równoczesnych zapisach
+          // Używamy timestamp w milisekundach + losowej liczby (0-9999), aby zapewnić unikalność
+          // To jest bezpieczniejsze niż sequential ID w środowisku serverless z propagacją CDN
+          const timestamp = Date.now();
+          const random = Math.floor(Math.random() * 10000); // 0-9999
+          // Kombinujemy timestamp i random, aby mieć unikalne ID
+          // Timestamp daje nam unikalność czasową, random dodaje dodatkową warstwę bezpieczeństwa
+          let newId = timestamp * 10000 + random;
           
-          // Sprawdź czy ID już istnieje (może się zdarzyć przy równoczesnych zapisach)
-          // Jeśli tak, użyj większego ID
-          while (registrations.some((r: any) => r.id === newId)) {
+          // Jeśli przypadkiem ID już istnieje (bardzo mało prawdopodobne), zwiększ je
+          let attempts = 0;
+          while (registrations.some((r: any) => r.id === newId) && attempts < 10) {
             newId++;
-            console.log(`Registration create: ID ${newId - 1} already exists, using ${newId}`);
+            attempts++;
+            console.log(`Registration create: ID collision detected, using ${newId}`);
+          }
+          
+          if (attempts >= 10) {
+            // Fallback do sequential ID, jeśli timestamp-based nie zadziałał
+            const maxId = registrations.length > 0 ? Math.max(...registrations.map((r: any) => r.id || 0)) : 0;
+            newId = maxId + 1;
+            console.log(`Registration create: Fallback to sequential ID: ${newId}`);
           }
           const newRegistration = { ...registration, id: newId, created_at: new Date().toISOString() };
           console.log(`Registration create: Attempt ${attempt}, creating new registration`, { 
             id: newId, 
             match_id: registration.match_id, 
             user_id: registration.user_id,
-            maxId,
+            timestamp,
+            random,
             totalRegistrations: registrations.length,
           });
           
