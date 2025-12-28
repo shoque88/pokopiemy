@@ -52,5 +52,7 @@ export interface Registration {
 export interface MatchWithRegistrations extends Match {
   registrations: (Registration & { user: User })[];
   registered_count: number;
+  waitlist?: (Registration & { user: User })[];
+  waitlist_count?: number;
 }
 
