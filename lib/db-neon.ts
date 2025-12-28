@@ -268,6 +268,18 @@ const db = {
       const result = await sql`DELETE FROM matches WHERE id = ${id} RETURNING id`;
       return result.length > 0;
     },
+    findByStatus: async (status: string) => {
+      const result = await sql`SELECT * FROM matches WHERE status = ${status} ORDER BY id`;
+      return result.map((row: any) => ({
+        ...row,
+        payment_methods: typeof row.payment_methods === 'string' 
+          ? JSON.parse(row.payment_methods || '[]')
+          : row.payment_methods || [],
+        is_recurring: toBool(row.is_recurring),
+        is_free: toBool(row.is_free),
+        status: row.status || 'active',
+      }));
+    },
   },
   registrations: {
     findByMatch: async (matchId: number) => {

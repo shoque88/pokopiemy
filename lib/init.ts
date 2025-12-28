@@ -1,5 +1,5 @@
 // Ten plik zapewnia inicjalizację bazy danych przy starcie aplikacji
-import { initDatabase } from './db';
+import { initDatabase } from './db-neon';
 
 // Inicjalizuj bazę danych (asynchronicznie)
 (async () => {

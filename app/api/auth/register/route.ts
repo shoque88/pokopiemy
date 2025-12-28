@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/db';
+import db from '@/lib/db-neon';
 import { hashPassword, generateToken } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';

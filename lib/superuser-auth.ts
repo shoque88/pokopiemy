@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { verifyToken } from './auth';
-import db from './db';
+import db from './db-neon';
 
 export interface SuperuserAuthResult {
   userId: number;

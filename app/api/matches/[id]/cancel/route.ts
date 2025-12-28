@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/db';
+import db from '@/lib/db-neon';
 import { getAuthUserOrNextAuth } from '@/lib/middleware';
 import { sendCancelationEmails } from '@/lib/match-utils';
 

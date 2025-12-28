@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
-import db from '@/lib/db';
+import db from '@/lib/db-neon';
 
 export const authOptions: NextAuthOptions = {
   providers: [

@@ -1,4 +1,4 @@
-import db from './db';
+import db from './db-neon';
 import { Match, MatchStatus, RecurrenceFrequency } from './types';
 import { format, addDays, addWeeks, addMonths, parseISO, isAfter, differenceInMilliseconds } from 'date-fns';
 import nodemailer from 'nodemailer';

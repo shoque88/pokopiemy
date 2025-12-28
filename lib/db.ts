@@ -399,9 +399,10 @@ const db = {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           // Wyłącz cache dla rejestracji, aby zawsze mieć najnowsze dane przed sprawdzeniem duplikatów
-          // Dodaj małe opóźnienie na początku każdej próby (oprócz pierwszej), aby dać czas na propagację danych
+          // Dodaj opóźnienie na początku każdej próby (oprócz pierwszej), aby dać czas na propagację danych
+          // Zwiększone opóźnienie, aby zmniejszyć prawdopodobieństwo konfliktów przy równoczesnych zapisach
           if (attempt > 1) {
-            await new Promise(resolve => setTimeout(resolve, 200 * attempt));
+            await new Promise(resolve => setTimeout(resolve, 500 * attempt));
           }
           
           const registrations = await readCollection(REGISTRATIONS_KEY, [], true);
@@ -417,13 +418,15 @@ const db = {
           }
           
           // Utwórz nową rejestrację - użyj timestamp-based ID, aby uniknąć kolizji przy równoczesnych zapisach
-          // Używamy timestamp w milisekundach + losowej liczby (0-9999), aby zapewnić unikalność
-          // To jest bezpieczniejsze niż sequential ID w środowisku serverless z propagacją CDN
-          const timestamp = Date.now();
-          const random = Math.floor(Math.random() * 10000); // 0-9999
-          // Kombinujemy timestamp i random, aby mieć unikalne ID
-          // Timestamp daje nam unikalność czasową, random dodaje dodatkową warstwę bezpieczeństwa
-          let newId = timestamp * 10000 + random;
+          // Używamy timestamp w milisekundach (od 2024-01-01) + losowej liczby (0-999), aby zapewnić unikalność
+          // Unikamy bardzo dużych liczb, które mogą przekroczyć bezpieczny zakres JavaScript Number (2^53 - 1)
+          // Używamy offsetu timestamp od 2024-01-01, aby zmniejszyć wartość liczbową
+          const timestampOffset = new Date('2024-01-01').getTime();
+          const timestamp = Date.now() - timestampOffset; // Offset od 2024-01-01
+          const random = Math.floor(Math.random() * 1000); // 0-999
+          // Kombinujemy timestamp (offset) i random, aby mieć unikalne ID
+          // timestamp * 1000 daje nam milisekundy od 2024-01-01, random dodaje dodatkową warstwę bezpieczeństwa
+          let newId = timestamp * 1000 + random;
           
           // Jeśli przypadkiem ID już istnieje (bardzo mało prawdopodobne), zwiększ je
           let attempts = 0;
@@ -454,23 +457,25 @@ const db = {
           console.log('Registration create: Updated registrations count:', updatedRegistrations.length);
           
           // Zapisz (dla rejestracji nie zapisujemy w cache w writeCollection)
-          // Jeśli writeCollection się powiedzie (nie rzuci błędu), założymy że rejestracja została zapisana
-          // Nie weryfikujemy odczytem, ponieważ propagacja danych w Vercel Blob może mieć opóźnienie CDN
           await writeCollection(REGISTRATIONS_KEY, updatedRegistrations);
           
-          // Zapisz się powiódł - zwróć rejestrację
+          // Po zapisie, zwracamy rejestrację bez weryfikacji odczytem
+          // Weryfikacja nie jest potrzebna, ponieważ jeśli writeCollection się powiedzie (nie rzuci błędu),
+          // dane zostaną zapisane. Propagacja CDN może mieć opóźnienie, ale to jest normalne w środowisku serverless.
+          // Frontend będzie mógł odczytać dane po krótkim czasie (zwykle < 1s)
           console.log('Registration create: Write successful', {
             registrationId: newRegistration.id,
             matchId: newRegistration.match_id,
             userId: newRegistration.user_id,
-            totalRegistrations: updatedRegistrations.length,
+            totalRegistrationsBeforeWrite: registrations.length,
+            totalRegistrationsAfterWrite: updatedRegistrations.length,
           });
           return newRegistration;
         } catch (error) {
           console.error(`Registration create: Attempt ${attempt} failed with error:`, error);
           lastError = error;
           if (attempt < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 200 * attempt));
+            await new Promise(resolve => setTimeout(resolve, 500 * attempt));
           }
         }
       }

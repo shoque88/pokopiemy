@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
-import db from '@/lib/db';
+import db from '@/lib/db-neon';
 
 export async function getSession() {
   try {

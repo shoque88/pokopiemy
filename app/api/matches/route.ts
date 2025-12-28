@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import '@/lib/init'; // Inicjalizacja bazy danych
-import db from '@/lib/db';
+import db from '@/lib/db-neon';
 import { Match, MatchWithRegistrations } from '@/lib/types';
 import { updateMatchStatuses } from '@/lib/match-utils';
 import { parseISO } from 'date-fns';
