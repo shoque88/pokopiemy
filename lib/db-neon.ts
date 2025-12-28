@@ -494,6 +494,17 @@ const db = {
         throw error;
       }
     },
+    get: async (id: number) => {
+      const result = await sql`SELECT * FROM registrations WHERE id = ${id}`;
+      if (result.length === 0) return null;
+      const registration: any = result[0];
+      return {
+        id: registration.id,
+        match_id: registration.match_id,
+        user_id: registration.user_id,
+        created_at: registration.created_at,
+      };
+    },
     delete: async (id: number) => {
       const result = await sql`DELETE FROM registrations WHERE id = ${id} RETURNING id`;
       return result.length > 0;
