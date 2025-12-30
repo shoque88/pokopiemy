@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const location = searchParams.get('location');
     const status = searchParams.get('status') || 'active';
     const dateFrom = searchParams.get('dateFrom');
+    const level = searchParams.get('level');
     const freeOnly = searchParams.get('freeOnly') === 'true';
     const hideFull = searchParams.get('hideFull') === 'true';
     const skipLevelFilter = searchParams.get('skipLevelFilter') === 'true';
@@ -61,9 +62,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Filtrowanie po poziomie użytkownika (jeśli użytkownik jest zalogowany i ma ustawiony poziom)
-    // Pomijamy filtrowanie jeśli skipLevelFilter=true (np. dla strony "moje mecze")
-    if (userPreferredLevel && !skipLevelFilter) {
+    // Filtrowanie po poziomie - priorytet ma parametr level z query string
+    if (level) {
+      matches = matches.filter((m: any) => m.level === level);
+    } else if (userPreferredLevel && !skipLevelFilter) {
+      // Jeśli nie ma parametru level, użyj preferowanego poziomu użytkownika
+      // Pomijamy filtrowanie jeśli skipLevelFilter=true (np. dla strony "moje mecze")
       matches = matches.filter((m: any) => m.level === userPreferredLevel);
     }
 
