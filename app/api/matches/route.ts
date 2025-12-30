@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     const location = searchParams.get('location');
     const status = searchParams.get('status') || 'active';
     const dateFrom = searchParams.get('dateFrom');
+    const freeOnly = searchParams.get('freeOnly') === 'true';
+    const hideFull = searchParams.get('hideFull') === 'true';
     const skipLevelFilter = searchParams.get('skipLevelFilter') === 'true';
 
     // Pobierz zalogowanego użytkownika (jeśli istnieje) do filtrowania po poziomie
@@ -115,6 +117,8 @@ export async function GET(request: NextRequest) {
         ? JSON.parse(match.payment_methods || '[]')
         : match.payment_methods || [];
 
+      const isFull = registrations.length >= match.max_players;
+      
       return {
         ...match,
         payment_methods: paymentMethods,
@@ -123,10 +127,22 @@ export async function GET(request: NextRequest) {
         registered_count: registrations.length,
         waitlist: waitlistWithUsers,
         waitlist_count: waitlist.length,
+        is_full: isFull,
       };
     }));
 
-    return NextResponse.json(matchesWithRegistrations);
+    // Filtrowanie po meczach darmowych
+    let filteredMatches = matchesWithRegistrations;
+    if (freeOnly) {
+      filteredMatches = filteredMatches.filter((m: any) => m.is_free === true || m.is_free === 1);
+    }
+
+    // Filtrowanie pełnych meczów
+    if (hideFull) {
+      filteredMatches = filteredMatches.filter((m: any) => !m.is_full);
+    }
+
+    return NextResponse.json(filteredMatches);
   } catch (error) {
     console.error('Get matches error:', error);
     return NextResponse.json(
