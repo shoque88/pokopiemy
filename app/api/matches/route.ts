@@ -230,12 +230,18 @@ export async function POST(request: NextRequest) {
 
     // Dla zwykłych użytkowników, użyj ich telefonu/email jako organizer_phone/organizer_email (jeśli nie podano)
     // Admini mogą podać własny telefon/email
+    // Sprawdzamy czy telefon/email nie jest pustym stringiem
+    const userPhone = (user.phone && user.phone.trim() !== '') ? user.phone : null;
+    const userEmail = (user.email && user.email.trim() !== '') ? user.email : null;
+    const providedPhone = (organizer_phone && organizer_phone.trim() !== '') ? organizer_phone : null;
+    const providedEmail = (organizer_email && organizer_email.trim() !== '') ? organizer_email : null;
+    
     const finalOrganizerPhone = authUser.isAdmin 
-      ? (organizer_phone || user.phone || null)
-      : (user.phone || organizer_phone || null);
+      ? (providedPhone || userPhone || null)
+      : (userPhone || providedPhone || null);
     const finalOrganizerEmail = authUser.isAdmin
-      ? (organizer_email || user.email || null)
-      : (user.email || organizer_email || null);
+      ? (providedEmail || userEmail || null)
+      : (userEmail || providedEmail || null);
 
     // Upewnij się, że przynajmniej jeden z tych pól jest wypełniony
     if (!finalOrganizerPhone && !finalOrganizerEmail) {
