@@ -1,7 +1,8 @@
 // Ukryj ostrzeżenie deprecacji url.parse() z NextAuth (musi być przed importem NextAuth)
 if (typeof process !== 'undefined') {
   const originalEmitWarning = process.emitWarning;
-  process.emitWarning = function(warning: string | Error, options?: NodeJS.EmitWarningOptions) {
+  // @ts-ignore - process.emitWarning ma wiele wariantów sygnatury
+  process.emitWarning = function(warning: any, ...args: any[]) {
     if (warning && typeof warning === 'object' && 'name' in warning && warning.name === 'DeprecationWarning') {
       if ('message' in warning && typeof warning.message === 'string' && warning.message.includes('url.parse()')) {
         return; // Ignoruj to ostrzeżenie
@@ -10,7 +11,7 @@ if (typeof process !== 'undefined') {
     if (typeof warning === 'string' && warning.includes('url.parse()')) {
       return; // Ignoruj to ostrzeżenie
     }
-    return originalEmitWarning.call(process, warning, options);
+    return originalEmitWarning.apply(process, [warning, ...args]);
   };
   
   // Również przechwytuj przez process.on('warning')
