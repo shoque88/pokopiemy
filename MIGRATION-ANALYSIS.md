@@ -103,3 +103,5 @@ Jeśli migracja do Postgres jest zbyt skomplikowana, możemy:
 
 Ale to nie rozwiąże problemu całkowicie - tylko zmniejszy prawdopodobieństwo konfliktów.
 
+
+

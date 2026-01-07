@@ -41,3 +41,5 @@ Po wykonaniu skryptu zobaczysz listę meczów z ich danymi kontaktowymi organiza
 ## Alternatywa: Automatyczna aktualizacja podczas pobierania meczu
 Jeśli chcesz, aby mecze były automatycznie aktualizowane podczas ich pobierania (bez ręcznego uruchamiania skryptu), mogę dodać taką funkcjonalność do API. Daj znać, jeśli chcesz takiego rozwiązania.
 
+
+

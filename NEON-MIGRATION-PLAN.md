@@ -58,3 +58,5 @@ Utworzenie trzech tabel:
 - Weryfikacja spójności danych
 - Testy wydajności
 
+
+

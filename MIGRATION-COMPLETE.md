@@ -94,3 +94,5 @@ Jeśli wystąpią problemy, sprawdź:
 3. Czy connection string ma `?sslmode=require` na końcu
 4. Logi w Vercel Dashboard → Functions → Runtime Logs
 
+
+
