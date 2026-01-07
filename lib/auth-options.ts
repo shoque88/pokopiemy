@@ -175,14 +175,23 @@ export const authOptions: NextAuthOptions = {
             email: dbUser.email,
             provider: account.provider,
             providerAccountId: account.providerAccountId,
+            hasImage: !!(user as any).image,
+            currentAvatar: !!dbUser.avatar,
           });
           await db.users.update(dbUser.id, {
             oauth_provider: account.provider,
             oauth_id: account.providerAccountId,
             avatar: (user as any).image || dbUser.avatar || null, // Aktualizuj awatar jeśli dostępny
           });
-        } else if (account && (user as any).image && !dbUser.avatar) {
-          // Aktualizuj awatar dla istniejących użytkowników, jeśli nie mają go jeszcze
+        } else if (account && (user as any).image) {
+          // Aktualizuj awatar dla istniejących użytkowników, jeśli dostępny z OAuth
+          console.log('signIn callback: Updating avatar for existing user', {
+            userId: dbUser.id,
+            email: dbUser.email,
+            hasImage: !!(user as any).image,
+            currentAvatar: !!dbUser.avatar,
+            newAvatar: (user as any).image,
+          });
           await db.users.update(dbUser.id, {
             avatar: (user as any).image,
           });
