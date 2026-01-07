@@ -153,6 +153,20 @@ export const authOptions: NextAuthOptions = {
             oauth_id: account.providerAccountId,
           });
         }
+        
+        // Automatyczna naprawa uprawnień dla starych użytkowników
+        if (dbUser.can_create_matches === 0 || dbUser.can_register_to_matches === 0) {
+          console.log('signIn callback: Fixing permissions for existing user', {
+            userId: dbUser.id,
+            email: dbUser.email,
+            can_create_matches: dbUser.can_create_matches,
+            can_register_to_matches: dbUser.can_register_to_matches,
+          });
+          await db.users.update(dbUser.id, {
+            can_create_matches: 1,
+            can_register_to_matches: 1,
+          });
+        }
       }
 
       return true;
@@ -184,6 +198,22 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (dbUser) {
+          // Automatyczna naprawa uprawnień dla starych użytkowników
+          if (dbUser.can_create_matches === 0 || dbUser.can_register_to_matches === 0) {
+            console.log('JWT callback: Fixing permissions for existing user', {
+              userId: dbUser.id,
+              email: dbUser.email,
+              can_create_matches: dbUser.can_create_matches,
+              can_register_to_matches: dbUser.can_register_to_matches,
+            });
+            await db.users.update(dbUser.id, {
+              can_create_matches: 1,
+              can_register_to_matches: 1,
+            });
+            // Odśwież dane użytkownika po aktualizacji
+            dbUser = await db.users.get(dbUser.id);
+          }
+          
           token.userId = dbUser.id;
           token.isAdmin = dbUser.is_admin === 1;
           token.email = dbUser.email;
@@ -203,9 +233,34 @@ export const authOptions: NextAuthOptions = {
         // W kolejnych wywołaniach, jeśli mamy OAuth ID w tokenie, użyj go (najbardziej niezawodne)
         const dbUser = await db.users.findByOAuth((token as any).oauthProvider, (token as any).oauthId);
         if (dbUser) {
-          token.userId = dbUser.id;
-          token.isAdmin = dbUser.is_admin === 1;
-          token.email = dbUser.email;
+          // Automatyczna naprawa uprawnień dla starych użytkowników
+          if (dbUser.can_create_matches === 0 || dbUser.can_register_to_matches === 0) {
+            console.log('JWT refresh: Fixing permissions for existing user', {
+              userId: dbUser.id,
+              email: dbUser.email,
+              can_create_matches: dbUser.can_create_matches,
+              can_register_to_matches: dbUser.can_register_to_matches,
+            });
+            await db.users.update(dbUser.id, {
+              can_create_matches: 1,
+              can_register_to_matches: 1,
+            });
+            // Odśwież dane użytkownika po aktualizacji
+            const updatedUser = await db.users.get(dbUser.id);
+            if (updatedUser) {
+              token.userId = updatedUser.id;
+              token.isAdmin = updatedUser.is_admin === 1;
+              token.email = updatedUser.email;
+            } else {
+              token.userId = dbUser.id;
+              token.isAdmin = dbUser.is_admin === 1;
+              token.email = dbUser.email;
+            }
+          } else {
+            token.userId = dbUser.id;
+            token.isAdmin = dbUser.is_admin === 1;
+            token.email = dbUser.email;
+          }
         } else {
           console.error('JWT refresh: User not found by OAuth ID - clearing userId from token', {
             provider: (token as any).oauthProvider,
@@ -221,8 +276,31 @@ export const authOptions: NextAuthOptions = {
         // W kolejnych wywołaniach, jeśli mamy email w tokenie i NIE jest to OAuth, użyj go (fallback tylko dla nie-OAuth)
         const dbUser = await db.users.findByEmail(token.email as string);
         if (dbUser) {
-          token.userId = dbUser.id;
-          token.isAdmin = dbUser.is_admin === 1;
+          // Automatyczna naprawa uprawnień dla starych użytkowników
+          if (dbUser.can_create_matches === 0 || dbUser.can_register_to_matches === 0) {
+            console.log('JWT refresh (email): Fixing permissions for existing user', {
+              userId: dbUser.id,
+              email: dbUser.email,
+              can_create_matches: dbUser.can_create_matches,
+              can_register_to_matches: dbUser.can_register_to_matches,
+            });
+            await db.users.update(dbUser.id, {
+              can_create_matches: 1,
+              can_register_to_matches: 1,
+            });
+            // Odśwież dane użytkownika po aktualizacji
+            const updatedUser = await db.users.get(dbUser.id);
+            if (updatedUser) {
+              token.userId = updatedUser.id;
+              token.isAdmin = updatedUser.is_admin === 1;
+            } else {
+              token.userId = dbUser.id;
+              token.isAdmin = dbUser.is_admin === 1;
+            }
+          } else {
+            token.userId = dbUser.id;
+            token.isAdmin = dbUser.is_admin === 1;
+          }
         } else {
           // Wyczyść userId z tokenu, jeśli użytkownik nie istnieje
           console.error('JWT refresh: User not found by email - clearing userId from token', {
