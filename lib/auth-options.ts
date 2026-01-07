@@ -1,3 +1,27 @@
+// Ukryj ostrzeżenie deprecacji url.parse() z NextAuth (musi być przed importem NextAuth)
+if (typeof process !== 'undefined') {
+  const originalEmitWarning = process.emitWarning;
+  process.emitWarning = function(warning: any, ...args: any[]) {
+    if (warning && typeof warning === 'object' && warning.name === 'DeprecationWarning') {
+      if (warning.message && typeof warning.message === 'string' && warning.message.includes('url.parse()')) {
+        return; // Ignoruj to ostrzeżenie
+      }
+    }
+    if (typeof warning === 'string' && warning.includes('url.parse()')) {
+      return; // Ignoruj to ostrzeżenie
+    }
+    return originalEmitWarning.apply(process, [warning, ...args]);
+  };
+  
+  // Również przechwytuj przez process.on('warning')
+  process.removeAllListeners('warning');
+  process.on('warning', (warning) => {
+    if (warning.name === 'DeprecationWarning' && warning.message && warning.message.includes('url.parse()')) {
+      return; // Ignoruj to ostrzeżenie
+    }
+  });
+}
+
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
