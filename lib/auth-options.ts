@@ -11,6 +11,7 @@ if (typeof process !== 'undefined') {
     if (typeof warning === 'string' && warning.includes('url.parse()')) {
       return; // Ignoruj to ostrzeżenie
     }
+    // @ts-ignore - process.emitWarning ma wiele wariantów sygnatury
     return originalEmitWarning.apply(process, [warning, ...args]);
   };
   
