@@ -17,6 +17,7 @@ export interface User {
   username?: string;
   can_create_matches?: number;
   can_register_to_matches?: number;
+  avatar?: string;
   created_at: string;
 }
 

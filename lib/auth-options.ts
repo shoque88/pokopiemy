@@ -67,6 +67,7 @@ export const authOptions: NextAuthOptions = {
             oauth_id: account.providerAccountId,
             can_create_matches: 1,
             can_register_to_matches: 1,
+            avatar: (user as any).image || null, // Avatar z Facebook
           });
         }
 
@@ -117,6 +118,7 @@ export const authOptions: NextAuthOptions = {
             oauth_id: account?.providerAccountId || null,
             can_create_matches: 1,
             can_register_to_matches: 1,
+            avatar: (user as any).image || null, // Avatar z Google/Facebook
           });
           console.log('signIn callback: User created', {
             userId: dbUser.id,
@@ -151,6 +153,12 @@ export const authOptions: NextAuthOptions = {
           await db.users.update(dbUser.id, {
             oauth_provider: account.provider,
             oauth_id: account.providerAccountId,
+            avatar: (user as any).image || dbUser.avatar || null, // Aktualizuj awatar jeśli dostępny
+          });
+        } else if (account && (user as any).image && !dbUser.avatar) {
+          // Aktualizuj awatar dla istniejących użytkowników, jeśli nie mają go jeszcze
+          await db.users.update(dbUser.id, {
+            avatar: (user as any).image,
           });
         }
         

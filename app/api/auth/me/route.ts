@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       phone: user.phone,
       preferred_level: user.preferred_level,
       is_admin: user.is_admin === 1,
+      avatar: user.avatar || null,
     });
   } catch (error) {
     console.error('Get user error:', error);

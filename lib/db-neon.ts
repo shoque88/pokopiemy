@@ -43,6 +43,7 @@ const db = {
         is_superuser: row.is_superuser || 0,
         can_create_matches: row.can_create_matches ?? 1,
         can_register_to_matches: row.can_register_to_matches ?? 1,
+        avatar: row.avatar || null,
       }));
     },
     get: async (id: number) => {
@@ -65,6 +66,7 @@ const db = {
         is_superuser: row.is_superuser || 0,
         can_create_matches: row.can_create_matches ?? 1,
         can_register_to_matches: row.can_register_to_matches ?? 1,
+        avatar: row.avatar || null,
       };
     },
     findByEmail: async (email: string) => {
@@ -87,6 +89,7 @@ const db = {
         is_superuser: row.is_superuser || 0,
         can_create_matches: row.can_create_matches ?? 1,
         can_register_to_matches: row.can_register_to_matches ?? 1,
+        avatar: row.avatar || null,
       };
     },
     findByOAuth: async (provider: string, oauthId: string) => {
@@ -124,6 +127,7 @@ const db = {
           is_superuser: foundUser.is_superuser || 0,
           can_create_matches: foundUser.can_create_matches ?? 1,
           can_register_to_matches: foundUser.can_register_to_matches ?? 1,
+          avatar: foundUser.avatar || null,
         };
       }
       return null;
@@ -156,14 +160,14 @@ const db = {
           name, email, password, phone, preferred_level,
           is_admin, is_superuser, username,
           can_create_matches, can_register_to_matches,
-          oauth_provider, oauth_id
+          oauth_provider, oauth_id, avatar
         ) VALUES (
           ${user.name}, ${user.email || null}, ${user.password || null},
           ${user.phone || null}, ${user.preferred_level || null},
           ${toInt(user.is_admin)}, ${toInt(user.is_superuser) || 0},
           ${user.username || null},
           ${user.can_create_matches !== undefined ? toInt(user.can_create_matches) : 1}, ${user.can_register_to_matches !== undefined ? toInt(user.can_register_to_matches) : 1},
-          ${user.oauth_provider || null}, ${user.oauth_id || null}
+          ${user.oauth_provider || null}, ${user.oauth_id || null}, ${user.avatar || null}
         )
         RETURNING *
       `;
@@ -190,6 +194,7 @@ const db = {
         is_superuser: newUser.is_superuser || 0,
         can_create_matches: newUser.can_create_matches ?? 1,
         can_register_to_matches: newUser.can_register_to_matches ?? 1,
+        avatar: newUser.avatar || null,
       };
     },
     update: async (id: number, updates: any) => {
@@ -207,7 +212,8 @@ const db = {
           is_superuser = COALESCE(${toInt(updates.is_superuser)}, is_superuser),
           username = COALESCE(${updates.username}, username),
           can_create_matches = COALESCE(${toInt(updates.can_create_matches)}, can_create_matches),
-          can_register_to_matches = COALESCE(${toInt(updates.can_register_to_matches)}, can_register_to_matches)
+          can_register_to_matches = COALESCE(${toInt(updates.can_register_to_matches)}, can_register_to_matches),
+          avatar = COALESCE(${updates.avatar}, avatar)
         WHERE id = ${id}
         RETURNING *
       `;
@@ -229,6 +235,7 @@ const db = {
         is_superuser: updated.is_superuser || 0,
         can_create_matches: updated.can_create_matches ?? 1,
         can_register_to_matches: updated.can_register_to_matches ?? 1,
+        avatar: updated.avatar || null,
       };
     },
   },

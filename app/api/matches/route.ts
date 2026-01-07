@@ -95,6 +95,7 @@ export async function GET(request: NextRequest) {
           phone: user.phone,
           email: user.email,
           preferred_level: user.preferred_level,
+          avatar: user.avatar || null,
         } : null,
         };
       }).filter((reg: any) => reg.user !== null);
