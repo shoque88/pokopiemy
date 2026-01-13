@@ -4,6 +4,12 @@ import db from '@/lib/db-neon';
 import { Match, MatchWithRegistrations } from '@/lib/types';
 import { updateMatchStatuses } from '@/lib/match-utils';
 import { parseISO } from 'date-fns';
+import { randomBytes } from 'crypto';
+
+// Funkcja do generowania bezpiecznego tokenu dla meczów prywatnych
+function generatePrivateToken(): string {
+  return randomBytes(32).toString('base64url'); // base64url jest URL-safe
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -149,6 +155,7 @@ export async function GET(request: NextRequest) {
         payment_methods: paymentMethods,
         is_recurring: match.is_recurring === 1 || match.is_recurring === true,
         is_private: match.is_private === 1 || match.is_private === true,
+        private_token: match.private_token || null,
         registrations: registrationsWithUsers,
         registered_count: registrations.length,
         waitlist: waitlistWithUsers,
@@ -326,11 +333,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Generuj token dla meczów prywatnych
+    const privateToken = is_private ? generatePrivateToken() : null;
+    
     console.log('POST /api/matches: Creating match with dates', {
       date_start,
       date_end,
       location,
       now: new Date().toISOString(),
+      is_private,
+      privateToken: privateToken ? 'generated' : null
     });
     
     console.log('POST /api/matches: Calling db.matches.create');
@@ -355,6 +367,7 @@ export async function POST(request: NextRequest) {
       entry_fee: entry_fee || null,
       is_free: is_free ? 1 : 0,
       is_private: is_private ? 1 : 0,
+      private_token: privateToken,
       });
       console.log('POST /api/matches: db.matches.create succeeded', { 
         matchId: newMatch?.id,
@@ -384,6 +397,8 @@ export async function POST(request: NextRequest) {
       ...newMatch,
       payment_methods: paymentMethods,
       is_recurring: newMatch.is_recurring === 1 || newMatch.is_recurring === true,
+      is_private: newMatch.is_private === 1 || newMatch.is_private === true,
+      private_token: newMatch.private_token || null,
     });
   } catch (error) {
     console.error('Create match error:', error);

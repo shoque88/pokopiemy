@@ -273,6 +273,7 @@ const db = {
         entry_fee: row.entry_fee || null,
         is_free: toBool(row.is_free),
         is_private: toBool(row.is_private),
+        private_token: row.private_token || null,
         created_at,
       };
       });
@@ -316,6 +317,7 @@ const db = {
         entry_fee: match.entry_fee || null,
         is_free: toBool(match.is_free),
         is_private: toBool(match.is_private),
+        private_token: match.private_token || null,
         created_at,
       };
     },
@@ -326,7 +328,7 @@ const db = {
           max_players, organizer_phone, organizer_email,
           payment_methods, status, level,
           is_recurring, recurrence_frequency,
-          registration_start, registration_end, entry_fee, is_free, is_private
+          registration_start, registration_end, entry_fee, is_free, is_private, private_token
         ) VALUES (
           ${match.name}, ${match.description || null},
           ${match.date_start}, ${match.date_end},
@@ -336,7 +338,7 @@ const db = {
           ${match.status || 'active'}, ${match.level || 'kopanina'},
           ${toInt(match.is_recurring)}, ${match.recurrence_frequency || null},
           ${match.registration_start || null}, ${match.registration_end || null},
-          ${match.entry_fee || null}, ${toInt(match.is_free)}, ${toInt(match.is_private)}
+          ${match.entry_fee || null}, ${toInt(match.is_free)}, ${toInt(match.is_private)}, ${match.private_token || null}
         )
         RETURNING *
       `;
@@ -377,6 +379,7 @@ const db = {
         entry_fee: newMatch.entry_fee || null,
         is_free: toBool(newMatch.is_free),
         is_private: toBool(newMatch.is_private),
+        private_token: newMatch.private_token || null,
         created_at,
       };
     },
@@ -478,6 +481,8 @@ const db = {
         registration_end,
         entry_fee: row.entry_fee || null,
         is_free: toBool(row.is_free),
+        is_private: toBool(row.is_private),
+        private_token: row.private_token || null,
         created_at,
       };
       });

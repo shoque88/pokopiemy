@@ -6,7 +6,7 @@ import { sendCancelationEmails } from '@/lib/match-utils';
 
 export const dynamic = 'force-dynamic';
 
-// GET - szczegóły meczu
+// GET - szczegóły meczu (obsługuje zarówno ID jak i private_token)
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -14,12 +14,21 @@ export async function GET(
   try {
     await updateMatchStatuses();
 
-    const matchId = parseInt(params.id);
-    console.log('GET /api/matches/[id]: Looking for match', { matchId });
-    const match = await db.matches.get(matchId);
+    // Sprawdź czy parametr to liczba (ID) czy string (private_token)
+    const isNumeric = /^\d+$/.test(params.id);
+    let match;
+    
+    if (isNumeric) {
+      const matchId = parseInt(params.id);
+      console.log('GET /api/matches/[id]: Looking for match by ID', { matchId });
+      match = await db.matches.get(matchId);
+    } else {
+      console.log('GET /api/matches/[id]: Looking for match by private_token', { token: params.id });
+      match = await db.matches.findByPrivateToken(params.id);
+    }
     
     if (!match) {
-      console.error('GET /api/matches/[id]: Match not found', { matchId });
+      console.error('GET /api/matches/[id]: Match not found', { id: params.id, isNumeric });
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
     }
     console.log('GET /api/matches/[id]: Match found', { matchId: match.id, name: match.name });
@@ -89,6 +98,7 @@ export async function GET(
       is_recurring: match.is_recurring === 1 || match.is_recurring === true,
       is_free: match.is_free === 1 || match.is_free === true,
       is_private: match.is_private === 1 || match.is_private === true,
+      private_token: match.private_token || null,
       registrations: registrationsWithUsers,
       registered_count: registrations.length,
     });

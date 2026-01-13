@@ -41,6 +41,7 @@ export interface Match {
   entry_fee?: string;
   is_free?: boolean;
   is_private?: boolean;
+  private_token?: string;
   created_at: string;
 }
 
