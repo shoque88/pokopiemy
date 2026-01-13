@@ -88,6 +88,7 @@ export async function GET(
       waitlist: waitlistWithUsers,
       is_recurring: match.is_recurring === 1 || match.is_recurring === true,
       is_free: match.is_free === 1 || match.is_free === true,
+      is_private: match.is_private === 1 || match.is_private === true,
       registrations: registrationsWithUsers,
       registered_count: registrations.length,
     });
