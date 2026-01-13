@@ -40,6 +40,7 @@ export interface Match {
   registration_end?: string;
   entry_fee?: string;
   is_free?: boolean;
+  is_private?: boolean;
   created_at: string;
 }
 

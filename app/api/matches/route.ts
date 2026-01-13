@@ -128,6 +128,7 @@ export async function GET(request: NextRequest) {
         ...match,
         payment_methods: paymentMethods,
         is_recurring: match.is_recurring === 1 || match.is_recurring === true,
+        is_private: match.is_private === 1 || match.is_private === true,
         registrations: registrationsWithUsers,
         registered_count: registrations.length,
         waitlist: waitlistWithUsers,
@@ -145,6 +146,12 @@ export async function GET(request: NextRequest) {
     // Filtrowanie pełnych meczów
     if (hideFull) {
       filteredMatches = filteredMatches.filter((m: any) => !m.is_full);
+    }
+
+    // Filtrowanie meczów prywatnych - nie pokazujemy ich na stronie głównej
+    // Pomijamy to filtrowanie jeśli skipLevelFilter=true (dla strony "moje mecze")
+    if (!skipLevelFilter) {
+      filteredMatches = filteredMatches.filter((m: any) => !m.is_private && m.is_private !== 1);
     }
 
     return NextResponse.json(filteredMatches);
@@ -227,6 +234,7 @@ export async function POST(request: NextRequest) {
       registration_end,
       entry_fee,
       is_free,
+      is_private,
     } = body;
 
     // Dla zwykłych użytkowników, użyj ich telefonu/email jako organizer_phone/organizer_email (jeśli nie podano)
@@ -295,6 +303,7 @@ export async function POST(request: NextRequest) {
       registration_end: registration_end || null,
       entry_fee: entry_fee || null,
       is_free: is_free ? 1 : 0,
+      is_private: is_private ? 1 : 0,
       });
       console.log('POST /api/matches: db.matches.create succeeded', { matchId: newMatch?.id });
     } catch (createError: any) {
