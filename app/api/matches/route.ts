@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const location = searchParams.get('location');
-    const status = searchParams.get('status') || 'active';
+    const statusParam = searchParams.get('status');
+    const status = (statusParam && statusParam !== '') ? statusParam : 'active';
     const dateFrom = searchParams.get('dateFrom');
     const level = searchParams.get('level');
     const freeOnly = searchParams.get('freeOnly') === 'true';
