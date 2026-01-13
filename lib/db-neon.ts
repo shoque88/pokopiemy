@@ -607,6 +607,7 @@ const db = {
         id: row.id,
         match_id: row.match_id,
         user_id: row.user_id,
+        is_waitlist: row.is_waitlist || 0,
         created_at,
       };
     },
