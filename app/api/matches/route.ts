@@ -151,10 +151,21 @@ export async function GET(request: NextRequest) {
     // Filtrowanie meczów prywatnych - nie pokazujemy ich na stronie głównej
     // Pomijamy to filtrowanie TYLKO jeśli skipPrivateFilter=true (dla strony "moje mecze")
     const skipPrivateFilter = searchParams.get('skipPrivateFilter') === 'true';
+    console.log('GET /api/matches: Private filter check', {
+      skipPrivateFilter,
+      totalBeforeFilter: filteredMatches.length,
+      privateMatches: filteredMatches.filter((m: any) => m.is_private === true || m.is_private === 1).map((m: any) => ({ id: m.id, name: m.name, is_private: m.is_private }))
+    });
     if (!skipPrivateFilter) {
+      const beforeCount = filteredMatches.length;
       filteredMatches = filteredMatches.filter((m: any) => {
         const isPrivate = m.is_private === true || m.is_private === 1;
         return !isPrivate;
+      });
+      console.log('GET /api/matches: After private filter', {
+        beforeCount,
+        afterCount: filteredMatches.length,
+        removed: beforeCount - filteredMatches.length
       });
     }
 
@@ -218,7 +229,9 @@ export async function POST(request: NextRequest) {
       hasDateEnd: !!body.date_end,
       hasLocation: !!body.location,
       hasMaxPlayers: !!body.max_players,
-      hasLevel: !!body.level
+      hasLevel: !!body.level,
+      is_private: body.is_private,
+      is_private_type: typeof body.is_private
     });
     
     const {
@@ -309,7 +322,11 @@ export async function POST(request: NextRequest) {
       is_free: is_free ? 1 : 0,
       is_private: is_private ? 1 : 0,
       });
-      console.log('POST /api/matches: db.matches.create succeeded', { matchId: newMatch?.id });
+      console.log('POST /api/matches: db.matches.create succeeded', { 
+        matchId: newMatch?.id,
+        is_private_sent: is_private,
+        is_private_saved: newMatch?.is_private
+      });
     } catch (createError: any) {
       console.error('POST /api/matches: Error in db.matches.create', { 
         error: createError?.message, 
