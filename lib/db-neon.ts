@@ -405,7 +405,8 @@ const db = {
           registration_end = COALESCE(${updates.registration_end}, registration_end),
           entry_fee = COALESCE(${updates.entry_fee}, entry_fee),
           is_free = COALESCE(${toInt(updates.is_free)}, is_free),
-          is_private = COALESCE(${toInt(updates.is_private)}, is_private)
+          is_private = COALESCE(${toInt(updates.is_private)}, is_private),
+          private_token = COALESCE(${updates.private_token || null}, private_token)
         WHERE id = ${id}
         RETURNING *
       `;
@@ -442,6 +443,46 @@ const db = {
         entry_fee: updated.entry_fee || null,
         is_free: toBool(updated.is_free),
         is_private: toBool(updated.is_private),
+        private_token: updated.private_token || null,
+        created_at,
+      };
+    },
+    findByPrivateToken: async (token: string) => {
+      const result = await sql`SELECT * FROM matches WHERE private_token = ${token}`;
+      if (result.length === 0) return null;
+      const match: any = result[0];
+      
+      // Konwertuj daty Date na stringi ISO
+      const date_start = match.date_start instanceof Date ? match.date_start.toISOString() : match.date_start;
+      const date_end = match.date_end instanceof Date ? match.date_end.toISOString() : match.date_end;
+      const registration_start = match.registration_start instanceof Date ? match.registration_start.toISOString() : (match.registration_start || null);
+      const registration_end = match.registration_end instanceof Date ? match.registration_end.toISOString() : (match.registration_end || null);
+      const created_at = match.created_at instanceof Date ? match.created_at.toISOString() : match.created_at;
+      
+      return {
+        ...match,
+        id: match.id,
+        name: match.name,
+        description: match.description || null,
+        date_start,
+        date_end,
+        location: match.location,
+        max_players: match.max_players,
+        organizer_phone: match.organizer_phone || null,
+        organizer_email: match.organizer_email || null,
+        payment_methods: typeof match.payment_methods === 'string'
+          ? JSON.parse(match.payment_methods || '[]')
+          : match.payment_methods || [],
+        status: match.status || 'active',
+        level: match.level || 'kopanina',
+        is_recurring: toBool(match.is_recurring),
+        recurrence_frequency: match.recurrence_frequency || null,
+        registration_start,
+        registration_end,
+        entry_fee: match.entry_fee || null,
+        is_free: toBool(match.is_free),
+        is_private: toBool(match.is_private),
+        private_token: match.private_token || null,
         created_at,
       };
     },
