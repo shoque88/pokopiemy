@@ -22,6 +22,12 @@ export async function GET(
       const matchId = parseInt(params.id);
       console.log('GET /api/matches/[id]: Looking for match by ID', { matchId });
       match = await db.matches.get(matchId);
+      
+      // Jeśli mecz jest prywatny i użytkownik próbuje dostać się przez ID, zablokuj dostęp
+      if (match && (match.is_private === 1 || match.is_private === true)) {
+        console.log('GET /api/matches/[id]: Access denied - private match accessed by ID', { matchId: match.id });
+        return NextResponse.json({ error: 'Match not found' }, { status: 404 });
+      }
     } else {
       console.log('GET /api/matches/[id]: Looking for match by private_token', { token: params.id });
       match = await db.matches.findByPrivateToken(params.id);
@@ -31,7 +37,7 @@ export async function GET(
       console.error('GET /api/matches/[id]: Match not found', { id: params.id, isNumeric });
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
     }
-    console.log('GET /api/matches/[id]: Match found', { matchId: match.id, name: match.name });
+    console.log('GET /api/matches/[id]: Match found', { matchId: match.id, name: match.name, is_private: match.is_private });
 
     const registrations = await db.registrations.findByMatch(match.id);
     const waitlist = await db.registrations.findWaitlistByMatch(match.id);
