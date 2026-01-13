@@ -21,8 +21,25 @@ export async function DELETE(
       return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
     }
 
-    // Sprawdź czy użytkownik jest właścicielem rejestracji lub adminem
-    if (registration.user_id !== authUser.userId && !authUser.isAdmin) {
+    // Pobierz mecz
+    const match = await db.matches.get(registration.match_id);
+    if (!match) {
+      return NextResponse.json({ error: 'Match not found' }, { status: 404 });
+    }
+
+    // Pobierz dane użytkownika
+    const user = await db.users.get(authUser.userId);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Sprawdź czy użytkownik jest właścicielem rejestracji, organizatorem meczu lub adminem
+    const isOwner = registration.user_id === authUser.userId;
+    const isOrganizer = (user.phone && user.phone === match.organizer_phone) ||
+                        (user.email && user.email === match.organizer_email);
+    const isAdmin = authUser.isAdmin;
+
+    if (!isOwner && !isOrganizer && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

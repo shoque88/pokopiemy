@@ -39,6 +39,15 @@ export async function GET(
     }
     console.log('GET /api/matches/[id]: Match found', { matchId: match.id, name: match.name, is_private: match.is_private });
 
+    // Sprawdź czy użytkownik jest zbanowany z tego meczu
+    const authUser = await getAuthUserOrNextAuth(request);
+    if (authUser) {
+      const ban = await db.match_bans.findByMatchAndUser(match.id, authUser.userId);
+      if (ban) {
+        return NextResponse.json({ error: 'Match not found' }, { status: 404 });
+      }
+    }
+
     const registrations = await db.registrations.findByMatch(match.id);
     const waitlist = await db.registrations.findWaitlistByMatch(match.id);
     console.log('GET /api/matches/[id]: Found registrations', { 

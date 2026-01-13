@@ -58,6 +58,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Sprawdź czy użytkownik jest zbanowany z tego meczu
+    const ban = await db.match_bans.findByMatchAndUser(match_id, user.id);
+    if (ban) {
+      return NextResponse.json(
+        { error: 'Nie możesz zapisać się na ten mecz' },
+        { status: 403 }
+      );
+    }
+
     // Sprawdź czy użytkownik już jest zapisany
     const existing = await db.registrations.findByMatchAndUser(match_id, user.id);
     if (existing) {

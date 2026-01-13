@@ -734,6 +734,75 @@ const db = {
       return deleted > 0;
     },
   },
+  match_bans: {
+    create: async (matchId: number, userId: number) => {
+      try {
+        const result = await sql`
+          INSERT INTO match_bans (match_id, user_id)
+          VALUES (${matchId}, ${userId})
+          ON CONFLICT (match_id, user_id) DO NOTHING
+          RETURNING *
+        `;
+        
+        if (result.length === 0) {
+          // Konflikt - ban już istnieje
+          return null;
+        }
+        
+        const newBan: any = result[0];
+        const created_at = newBan.created_at instanceof Date ? newBan.created_at.toISOString() : newBan.created_at;
+        return {
+          id: newBan.id,
+          match_id: newBan.match_id,
+          user_id: newBan.user_id,
+          created_at,
+        };
+      } catch (error: any) {
+        console.error('Match ban create: Error', error);
+        if (error.code === '23505') { // unique_violation
+          return null;
+        }
+        throw error;
+      }
+    },
+    findByMatchAndUser: async (matchId: number, userId: number) => {
+      const result = await sql`
+        SELECT * FROM match_bans 
+        WHERE match_id = ${matchId} AND user_id = ${userId}
+      `;
+      if (result.length === 0) {
+        return null;
+      }
+      const row: any = result[0];
+      const created_at = row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at;
+      return {
+        id: row.id,
+        match_id: row.match_id,
+        user_id: row.user_id,
+        created_at,
+      };
+    },
+    findByMatch: async (matchId: number) => {
+      const result = await sql`SELECT * FROM match_bans WHERE match_id = ${matchId}`;
+      return result.map((row: any) => {
+        const created_at = row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at;
+        return {
+          id: row.id,
+          match_id: row.match_id,
+          user_id: row.user_id,
+          created_at,
+        };
+      });
+    },
+    delete: async (matchId: number, userId: number) => {
+      const result = await sql`
+        DELETE FROM match_bans 
+        WHERE match_id = ${matchId} AND user_id = ${userId}
+        RETURNING id
+      `;
+      return result.length > 0;
+    },
+  },
 };
 
 export default db;
