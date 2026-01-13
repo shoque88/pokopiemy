@@ -21,6 +21,18 @@ export async function GET(request: NextRequest) {
     const freeOnly = searchParams.get('freeOnly') === 'true';
     const hideFull = searchParams.get('hideFull') === 'true';
     const skipLevelFilter = searchParams.get('skipLevelFilter') === 'true';
+    const skipPrivateFilter = searchParams.get('skipPrivateFilter') === 'true';
+    
+    console.log('GET /api/matches: Query params', {
+      location,
+      status,
+      level,
+      freeOnly,
+      hideFull,
+      skipLevelFilter,
+      skipPrivateFilter,
+      allParams: Object.fromEntries(searchParams.entries())
+    });
 
     // Pobierz zalogowanego użytkownika (jeśli istnieje) do filtrowania po poziomie
     const { getAuthUserOrNextAuth } = await import('@/lib/middleware');
@@ -38,7 +50,14 @@ export async function GET(request: NextRequest) {
     let matches = await db.matches.all();
     console.log('GET /api/matches: All matches before filtering', { 
       totalMatches: matches.length,
-      matches: matches.map((m: any) => ({ id: m.id, name: m.name, status: m.status, date_end: m.date_end }))
+      matches: matches.map((m: any) => ({ 
+        id: m.id, 
+        name: m.name, 
+        status: m.status, 
+        date_end: m.date_end,
+        is_private: m.is_private,
+        is_private_type: typeof m.is_private
+      }))
     });
 
     // Filtrowanie
@@ -150,11 +169,25 @@ export async function GET(request: NextRequest) {
 
     // Filtrowanie meczów prywatnych - nie pokazujemy ich na stronie głównej
     // Pomijamy to filtrowanie TYLKO jeśli skipPrivateFilter=true (dla strony "moje mecze")
-    const skipPrivateFilter = searchParams.get('skipPrivateFilter') === 'true';
     console.log('GET /api/matches: Private filter check', {
       skipPrivateFilter,
       totalBeforeFilter: filteredMatches.length,
-      privateMatches: filteredMatches.filter((m: any) => m.is_private === true || m.is_private === 1).map((m: any) => ({ id: m.id, name: m.name, is_private: m.is_private }))
+      privateMatches: filteredMatches.filter((m: any) => {
+        const isPrivate = m.is_private === true || m.is_private === 1;
+        return isPrivate;
+      }).map((m: any) => ({ 
+        id: m.id, 
+        name: m.name, 
+        is_private: m.is_private,
+        is_private_type: typeof m.is_private,
+        is_private_raw: m.is_private
+      })),
+      allMatchesWithPrivate: filteredMatches.map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        is_private: m.is_private,
+        is_private_type: typeof m.is_private
+      }))
     });
     if (!skipPrivateFilter) {
       const beforeCount = filteredMatches.length;
