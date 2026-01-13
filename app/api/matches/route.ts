@@ -149,8 +149,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Filtrowanie meczów prywatnych - nie pokazujemy ich na stronie głównej
-    // Pomijamy to filtrowanie jeśli skipLevelFilter=true (dla strony "moje mecze")
-    if (!skipLevelFilter) {
+    // Pomijamy to filtrowanie TYLKO jeśli skipPrivateFilter=true (dla strony "moje mecze")
+    const skipPrivateFilter = searchParams.get('skipPrivateFilter') === 'true';
+    if (!skipPrivateFilter) {
       filteredMatches = filteredMatches.filter((m: any) => {
         const isPrivate = m.is_private === true || m.is_private === 1;
         return !isPrivate;
