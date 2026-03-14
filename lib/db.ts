@@ -172,51 +172,63 @@ async function writeCollection(key: string, data: any[]): Promise<void> {
 export async function initDatabase() {
   const users = await readCollection(USERS_KEY, []);
 
+  const adminEmail = process.env.ADMIN_DEFAULT_EMAIL;
+  const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD;
+  const superuserEmail = process.env.SUPERUSER_DEFAULT_EMAIL;
+  const superuserPassword = process.env.SUPERUSER_DEFAULT_PASSWORD;
+
   // Utworzenie domyślnego użytkownika admina (jeśli nie istnieje)
   const adminExists = users.some((u: any) => u.is_admin === 1);
   if (!adminExists) {
-    const bcrypt = require('bcryptjs');
-    const hashedPassword = bcrypt.hashSync('***REDACTED***', 10);
-    const maxId = users.length > 0 ? Math.max(...users.map((u: any) => u.id)) : 0;
-    const admin = {
-      id: maxId + 1,
-      name: 'Admin',
-      email: '***REDACTED_EMAIL***',
-      password: hashedPassword,
-      phone: '***REDACTED_PHONE***',
-      preferred_level: null,
-      is_admin: 1,
-      is_superuser: 0,
-      can_create_matches: 1,
-      can_register_to_matches: 1,
-      created_at: new Date().toISOString(),
-    };
-    users.push(admin);
-    await writeCollection(USERS_KEY, users);
+    if (!adminEmail || !adminPassword) {
+      console.warn('Brak ADMIN_DEFAULT_EMAIL lub ADMIN_DEFAULT_PASSWORD — pomijam tworzenie admina');
+    } else {
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = bcrypt.hashSync(adminPassword, 10);
+      const maxId = users.length > 0 ? Math.max(...users.map((u: any) => u.id)) : 0;
+      const admin = {
+        id: maxId + 1,
+        name: 'Admin',
+        email: adminEmail,
+        password: hashedPassword,
+        phone: null,
+        preferred_level: null,
+        is_admin: 1,
+        is_superuser: 0,
+        can_create_matches: 1,
+        can_register_to_matches: 1,
+        created_at: new Date().toISOString(),
+      };
+      users.push(admin);
+      await writeCollection(USERS_KEY, users);
+    }
   }
-  
+
   // Utworzenie superusera (jeśli nie istnieje)
   const superuserExists = users.some((u: any) => u.is_superuser === 1);
   if (!superuserExists) {
-    const bcrypt = require('bcryptjs');
-    const hashedPassword = bcrypt.hashSync('***REDACTED***', 10);
-    const maxId = users.length > 0 ? Math.max(...users.map((u: any) => u.id)) : 0;
-    const superuser = {
-      id: maxId + 1,
-      name: 'Superuser',
-      email: '***REDACTED_EMAIL***',
-      username: 'superuser',
-      password: hashedPassword,
-      phone: null,
-      preferred_level: null,
-      is_admin: 0,
-      is_superuser: 1,
-      can_create_matches: 1,
-      can_register_to_matches: 1,
-      created_at: new Date().toISOString(),
-    };
-    users.push(superuser);
-    await writeCollection(USERS_KEY, users);
+    if (!superuserEmail || !superuserPassword) {
+      console.warn('Brak SUPERUSER_DEFAULT_EMAIL lub SUPERUSER_DEFAULT_PASSWORD — pomijam tworzenie superusera');
+    } else {
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = bcrypt.hashSync(superuserPassword, 10);
+      const maxId = users.length > 0 ? Math.max(...users.map((u: any) => u.id)) : 0;
+      const superuser = {
+        id: maxId + 1,
+        name: 'Superuser',
+        email: superuserEmail,
+        username: 'superuser',
+        password: hashedPassword,
+        phone: null,
+        preferred_level: null,
+        is_admin: 0,
+        is_superuser: 1,
+        can_create_matches: 1,
+        can_register_to_matches: 1,
+        created_at: new Date().toISOString(),
+      };
+      users.push(superuser);
+      await writeCollection(USERS_KEY, users);
   }
 }
 

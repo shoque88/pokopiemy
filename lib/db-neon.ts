@@ -810,26 +810,39 @@ export default db;
 
 // Funkcja inicjalizacji (tworzenie domyślnych użytkowników)
 export async function initDatabase() {
+  const adminEmail = process.env.ADMIN_DEFAULT_EMAIL;
+  const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD;
+  const superuserEmail = process.env.SUPERUSER_DEFAULT_EMAIL;
+  const superuserPassword = process.env.SUPERUSER_DEFAULT_PASSWORD;
+
   // Sprawdź czy admin istnieje
   const adminResult = await sql`SELECT id FROM users WHERE is_admin = 1 LIMIT 1`;
   if (adminResult.length === 0) {
-    const bcrypt = require('bcryptjs');
-    const hashedPassword = bcrypt.hashSync('***REDACTED***', 10);
-    await sql`
-      INSERT INTO users (name, email, password, is_admin, can_create_matches, can_register_to_matches)
-      VALUES ('Admin', '***REDACTED_EMAIL***', ${hashedPassword}, 1, 1, 1)
-    `;
+    if (!adminEmail || !adminPassword) {
+      console.warn('Brak ADMIN_DEFAULT_EMAIL lub ADMIN_DEFAULT_PASSWORD — pomijam tworzenie admina');
+    } else {
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = bcrypt.hashSync(adminPassword, 10);
+      await sql`
+        INSERT INTO users (name, email, password, is_admin, can_create_matches, can_register_to_matches)
+        VALUES ('Admin', ${adminEmail}, ${hashedPassword}, 1, 1, 1)
+      `;
+    }
   }
-  
+
   // Sprawdź czy superuser istnieje
   const superuserResult = await sql`SELECT id FROM users WHERE is_superuser = 1 LIMIT 1`;
   if (superuserResult.length === 0) {
-    const bcrypt = require('bcryptjs');
-    const hashedPassword = bcrypt.hashSync('***REDACTED***', 10);
-    await sql`
-      INSERT INTO users (name, email, username, password, is_superuser, can_create_matches, can_register_to_matches)
-      VALUES ('Superuser', '***REDACTED_EMAIL***', 'superuser', ${hashedPassword}, 1, 1, 1)
-    `;
+    if (!superuserEmail || !superuserPassword) {
+      console.warn('Brak SUPERUSER_DEFAULT_EMAIL lub SUPERUSER_DEFAULT_PASSWORD — pomijam tworzenie superusera');
+    } else {
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = bcrypt.hashSync(superuserPassword, 10);
+      await sql`
+        INSERT INTO users (name, email, username, password, is_superuser, can_create_matches, can_register_to_matches)
+        VALUES ('Superuser', ${superuserEmail}, 'superuser', ${hashedPassword}, 1, 1, 1)
+      `;
+    }
   }
 }
 
