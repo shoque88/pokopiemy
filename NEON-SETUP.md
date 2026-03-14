@@ -8,7 +8,7 @@ npm install @neondatabase/serverless
 
 ## Krok 2: Konfiguracja w Neon Dashboard
 
-1. Przejdź do: https://console.neon.tech/app/***REDACTED_ORG***/projects
+1. Przejdź do: https://console.neon.tech/ (wybierz swoją organizację i projekt)
 2. Wybierz projekt (lub utwórz nowy)
 3. Skopiuj connection string (Connection string)
    - Format: `postgres://user:password@host.neon.tech/dbname?sslmode=require`
@@ -17,7 +17,7 @@ npm install @neondatabase/serverless
 
 ### 3.1. Otwórz SQL Editor w Neon Dashboard
 
-1. Przejdź do: https://console.neon.tech/app/***REDACTED_ORG***/projects
+1. Przejdź do: https://console.neon.tech/ (wybierz swoją organizację i projekt)
 2. Kliknij na swój projekt (lub utwórz nowy, jeśli jeszcze go nie masz)
 3. W lewym menu bocznym znajdź i kliknij **"SQL Editor"** (ikonka z symbolem `</>` lub tekst "SQL Editor")
 4. Otworzy się edytor SQL w środkowej części ekranu
