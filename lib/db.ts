@@ -229,6 +229,7 @@ export async function initDatabase() {
       };
       users.push(superuser);
       await writeCollection(USERS_KEY, users);
+    }
   }
 }
 
