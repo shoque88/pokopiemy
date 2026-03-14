@@ -53,5 +53,4 @@ Aplikacja będzie dostępna pod adresem http://localhost:3000
 
 ## Domyślne konto administratora
 
-- Email: `***REDACTED_EMAIL***`
-- Hasło: `***REDACTED***`
+Dane logowania admina i superusera konfiguruje się przez zmienne środowiskowe w pliku `.env` (patrz `.env.example`).
